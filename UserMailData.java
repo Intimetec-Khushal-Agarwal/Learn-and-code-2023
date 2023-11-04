@@ -1,6 +1,8 @@
 package CarbonFootprintAssignment;
 
-import javax.mail.*;
+import javax.mail.Folder;
+import javax.mail.MessagingException;
+import javax.mail.Store;
 
 public class UserMailData {
 
