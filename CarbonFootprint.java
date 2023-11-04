@@ -31,13 +31,13 @@ public class CarbonFootprint {
 			mailProperties.put("mail.imaps.ssl.protocols", "TLSv1.2");
 			mailProperties.put("mail.imaps.ssl.ciphersuites", "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256");
 
-			Session session = Session.getInstance(mailProperties, null);
-			Store connection = session.getStore("imaps");
-			connection.connect("imap.gmail.com", UserMailData.getEmailId(), UserMailData.getPassword());
+			Session sessionInstance = Session.getInstance(mailProperties, null);
+			Store connectionStore = sessionInstance.getStore("imaps");
+			connectionStore.connect("imap.gmail.com", UserMailData.getEmailId(), UserMailData.getPassword());
 			
-			inboxMailsCount = UserMailData.getNumberOfInboxMails(connection);
-			sentMailsCount = UserMailData.getNumberOfSentMails(connection);
-			spamMailsCount = UserMailData.getNumberOfSpamMails(connection);
+			inboxMailsCount = UserMailData.getNumberOfInboxMails(connectionStore);
+			sentMailsCount = UserMailData.getNumberOfSentMails(connectionStore);
+			spamMailsCount = UserMailData.getNumberOfSpamMails(connectionStore);
 			
 		} 
 		catch (MessagingException exception) 
