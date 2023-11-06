@@ -5,17 +5,14 @@ import javax.mail.MessagingException;
 import javax.mail.Store;
 
 public class UserMailData {
-
 	private String emailId;
 	private String password;
 
-//  constructor
 	public UserMailData(String emailId, String appPassword) {
 		this.emailId = emailId;
 		this.password = appPassword;
 	}
 
-//  get Method
 	public String getEmailId() {
 		return emailId;
 	}
@@ -24,7 +21,6 @@ public class UserMailData {
 		return password;
 	}
 
-//   get the number of inbox emails
 	public int getNumberOfInboxMails(Store connection) throws MessagingException {
 		Folder inbox = connection.getFolder("Inbox");
 		inbox.open(Folder.READ_ONLY);
@@ -33,7 +29,6 @@ public class UserMailData {
 		return numberOfInboxEmails;
 	}
 	
-//  get the number of sent mails
 	public int getNumberOfSentMails(Store connection) throws MessagingException {
 		Folder sent = connection.getFolder("[Gmail]/Sent Mail");
 		sent.open(Folder.READ_ONLY);
@@ -42,7 +37,6 @@ public class UserMailData {
 		return numberOfSentEmails;
 	}
 
-// get the number of spam mails
 	public int getNumberOfSpamMails(Store connection) throws MessagingException {
 		Folder spam = connection.getFolder("[Gmail]/Spam");
 		spam.open(Folder.READ_ONLY);
@@ -50,6 +44,4 @@ public class UserMailData {
 		spam.close(false);
 		return numberOfSpamEmails;
 	}
-
-	
 }

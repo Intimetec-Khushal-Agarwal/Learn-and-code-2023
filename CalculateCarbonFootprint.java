@@ -1,52 +1,50 @@
 package CarbonFootprintAssignment;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class CalculateCarbonFootprint {
 
-	private String emailId;
-	private String source;
-	private int inboxMailsCount;
-	private int sentMailsCount;
-	private int spamMailsCount;
-	private static double carbonFootprintInboxMail = 4.0;
-	private static double carbonFootprintSpamMail = 0.3;
-	private static double carbonFootprintsentMail = 4.9;
+    private String emailId;
+    private String source;
+    private int inboxMailsCount;
+    private int sentMailsCount;
+    private int spamMailsCount;
+    private Map<String, Double> carbonFootprints = new HashMap<>();
 
-	public CalculateCarbonFootprint(String emailId, int inboxMails, int sentMails, int spamMails) {
-		this.emailId = emailId;
-		this.inboxMailsCount = inboxMails;
-		this.sentMailsCount = sentMails;
-		this.spamMailsCount = spamMails;
-		this.source = getEmailSource(emailId);
-		getCarbonFootprintOfMails(emailId, inboxMailsCount, sentMailsCount, spamMailsCount);
-	}
+    public CalculateCarbonFootprint(String emailId, int inboxMails, int sentMails, int spamMails) {
+        this.emailId = emailId;
+        this.inboxMailsCount = inboxMails;
+        this.sentMailsCount = sentMails;
+        this.spamMailsCount = spamMails;
+        this.source = getEmailSource(emailId);
+        calculateCarbonFootprintOfMails();
+    }
 
-	private static String getEmailSource(String emailId) {
-		if (emailId.contains("@gmail.com")) {
-			return "Gmail";
-		} else if (emailId.contains("@outlook.com")) {
-			return "Outlook";
-		} else if (emailId.contains("@yahoo.com")) {
-			return "Yahoo";
-		}
+    private String getEmailSource(String emailId) {
+        String source = "Unknown";
 
-		return "";
-	}
-	
-	private static void getCarbonFootprintOfMails(String emailId, int inboxMails, int sentMails,
-			int spamMails) {
-		
-		carbonFootprintInboxMail = carbonFootprintInboxMail*inboxMails;
-		carbonFootprintSpamMail = carbonFootprintSpamMail*spamMails;
-		carbonFootprintSpamMail = carbonFootprintsentMail*sentMails;
-	}
+        if (emailId.contains("@gmail.com")) {
+            source = "Gmail";
+        } else if (emailId.contains("@outlook.com")) {
+            source = "Outlook";
+        } else if (emailId.contains("@yahoo.com")) {
+            source = "Yahoo";
+        }
+        return source;
+    }
 
-	
 
-	public void printCarbonFootprint() {
-		System.out.println("Source of mail for email id " + emailId + "is : " + source);
-		System.out.println("Carbon Footprint for Inbox Mail is: "+ carbonFootprintInboxMail);
-		System.out.println("Carbon Footprint for Spam Mail is: "+ carbonFootprintSpamMail);
-		System.out.println("Carbon Footprint for Sent Mail is: "+ carbonFootprintSpamMail);
-		
-	}
+    private void calculateCarbonFootprintOfMails() {
+        carbonFootprints.put("InboxMail", 4.0 * inboxMailsCount);
+        carbonFootprints.put("SpamMail", 0.3 * spamMailsCount);
+        carbonFootprints.put("SentMail", 4.9 * sentMailsCount);
+    }
+
+    public void printCarbonFootprint() {
+        System.out.println("Source of mail for email id " + emailId + " is: " + source);
+        for (Map.Entry<String, Double> entry : carbonFootprints.entrySet()) {
+            System.out.println("Carbon Footprint for " + entry.getKey() + " is: " + entry.getValue());
+        }
+    }
 }
