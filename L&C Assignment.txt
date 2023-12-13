@@ -1,0 +1,32 @@
+package DatabaseConnection;
+
+class UserSignUpService
+{
+
+	public static void setupUser(UserDetail user) {
+		boolean connectionStatus = DatabaseService.connectToDatabase(user)
+		if(ConnectionStatus){
+		   DatabaseService.createNewUser(user);
+		   DatabaseService.storeDefaultData();
+		   FileSystemManager.storeDirectory(user);
+		   NotifyUser.notification(true);
+		}
+		else{
+	   	   NotifyUser.notification(false);
+	        }
+	}
+}
+
+class DatabaseConnectionAPI
+{
+
+    public static void main(String[] args) {
+
+	UserDetails user = new UserDetails();
+        user.setUsername("Khushal Agarwal");
+        user.setEmail("Khushal.agarwal@intimetec.com");
+        user.setPassword("L&C2023");
+
+	UserSignUpService.setupUser(user);
+
+}
