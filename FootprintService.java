@@ -7,16 +7,14 @@ import javax.mail.MessagingException;
 
 public class FootprintService {
 
-  private String emailId;
-  private String password;
   private String source;
   private Map<String, Double> carbonFootprints = new HashMap<>();
   UserMailService userMailService;
+  private UserInputDetails userData;
 
-  public FootprintService(String emailId, String password) throws MessagingException {
-      this.emailId = emailId;
-      this.password = password;
-      this.source = getEmailSource(emailId);
+  public FootprintService(UserInputDetails userData) throws MessagingException {
+	  this.userData = userData;
+      this.source = getEmailSource(userData.getEmailId());
       initializeUser();
       calculateCarbonFootprintOfMails();
   }
@@ -35,7 +33,7 @@ public class FootprintService {
   }
 
   private void initializeUser() throws MessagingException {
-	  userMailService = new UserMailService(emailId, password);
+	  userMailService = new UserMailService();
   }
 
   private void calculateCarbonFootprintOfMails() throws MessagingException {
@@ -45,7 +43,7 @@ public class FootprintService {
   }
 
   public void printCarbonFootprint() {
-      System.out.println("Source of mail for email id " + emailId + " is: " + source);
+      System.out.println("Source of mail for email id " + userData.getEmailId() + " is: " + source);
       for (Map.Entry<String, Double> entry : carbonFootprints.entrySet()) {
           System.out.println("Carbon Footprint for " + entry.getKey() + " is: " + entry.getValue());
       }
