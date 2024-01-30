@@ -15,23 +15,19 @@ public class KaprekarNumberProcessor {
             processor.sort(arrayOfNumber);
 
             int descendingNumber = processor.convertArrayToNumber(arrayOfNumber);
-            int ascendingNumber = processor.reverseDescendingNumber(descendingNumber);
-
+            int ascendingNumber = processor.getReverseNumber(descendingNumber);
             number = descendingNumber - ascendingNumber;
 
             System.out.println(descendingNumber + " - " + ascendingNumber + " = " + number);
 
             if (ascendingNumber == descendingNumber) {
-                return false;
+                break;
             }
-
             if (number == KAPREKAR_CONSTANT) {
                 return true;
             }
-
             number = ValidateInput.validateAndAdjustNumber(number);
         }
-
         return false;
     }
 }
