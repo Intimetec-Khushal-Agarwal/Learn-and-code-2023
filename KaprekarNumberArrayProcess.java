@@ -1,6 +1,6 @@
 package Assignment2;
 
-public class KaprekarNumberArrayProcessor {
+public class KaprekarNumberArrayProcess {
 
     public void storeNumberInArray(int number, int[] arrayOfNumber) {
         int index = 0;
@@ -24,7 +24,7 @@ public class KaprekarNumberArrayProcessor {
         }
     }
 
-    public int convertArrayToNumber(int[] arrayOfNumber) {
+    public int getDescendingNumber(int[] arrayOfNumber) {
         int number = arrayOfNumber[0];
         for (int index = 1; index < arrayOfNumber.length; index++) {
             number = number * 10 + arrayOfNumber[index];
@@ -32,7 +32,7 @@ public class KaprekarNumberArrayProcessor {
         return number;
     }
 
-    public int getReverseNumber(int number) {
+    public int getAscendingNumber(int number) {
         int reverseNumber = 0;
         while (number != 0) {
             reverseNumber = reverseNumber * 10 + number % 10;
