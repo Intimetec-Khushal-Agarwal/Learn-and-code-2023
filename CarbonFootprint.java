@@ -14,7 +14,7 @@ public class CarbonFootprint {
 		
 		userEmailData.getUserDetails();
 		storeConnection.initializeConnection();
-	    carbonFootprints = calculateFootprint.calculateCarbonFootprintOfMails();
+	        carbonFootprints = calculateFootprint.calculateCarbonFootprintOfMails();
 		PrintCarbonFootprint.print(carbonFootprints);
 		
 	}
