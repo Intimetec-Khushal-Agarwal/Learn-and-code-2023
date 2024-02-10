@@ -17,6 +17,4 @@ public class UserInput {
 
         return number;
     }
-
-   
 }
