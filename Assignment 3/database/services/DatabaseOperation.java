@@ -1,4 +1,4 @@
-package DatabaseServices;
+package database.services;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -56,7 +56,7 @@ public class DatabaseOperation {
 	}
 
 	public void viewUser(String email) throws SQLException {
-		String sql = "Select * from Users where email = '"+email+"'";
+		String sql = "SELECT * FROM Users WHERE email = '"+email+"'";
 
 		PreparedStatement pstmt = connection.prepareStatement(sql);
 		ResultSet resultSet = pstmt.executeQuery();
@@ -70,10 +70,13 @@ public class DatabaseOperation {
 			System.out.println("EmpCode\tName\t\tEmail\t\t\tCName\tTechnology\tDesignation");
 			System.out.println(EmployeeCode + "\t" + Name + "\t" + email + "\t" + CompanyName + "\t" + Technology + "\t" + Designation);
 		}
+		else {
+			System.out.println("User not found");
+		}
 	}
 
 	public void viewAllUsers() throws SQLException {
-		String sql = "Select * from Users";
+		String sql = "SELECT * FROM Users";
 
 		PreparedStatement pstmt = connection.prepareStatement(sql);
 		ResultSet resultSet = pstmt.executeQuery();
@@ -92,7 +95,7 @@ public class DatabaseOperation {
 		}
 	}
 	
-	public boolean checkIfUserAlreadyExists(String mail) throws SQLException {
+	public boolean checkUserAlreadyExists(String mail) throws SQLException {
 
 		Statement statement = connection.createStatement();
 		ResultSet resultSet =  statement.executeQuery("select * from users where email = '"+mail+"'");

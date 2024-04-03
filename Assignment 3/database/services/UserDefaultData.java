@@ -1,7 +1,8 @@
-package DatabaseServices;
+package database.services;
 
 import java.util.Scanner;
-import EmailService.EmailValidation;
+
+import email.service.EmailValidation;
 
 @SuppressWarnings("resource")
 public class UserDefaultData {

@@ -1,4 +1,4 @@
-package EmailService;
+package email.service;
 
 import java.util.Properties;
 import jakarta.mail.Authenticator;
@@ -54,8 +54,7 @@ public class SendEmail {
 			Transport.send(message);
 
 			System.out.println("Email sent successfully!");
-		} 
-		catch (MessagingException e) {
+		} catch (MessagingException e) {
 			e.printStackTrace();
 		}
 	}

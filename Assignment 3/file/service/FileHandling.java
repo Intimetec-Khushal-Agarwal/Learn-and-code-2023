@@ -1,7 +1,7 @@
-package FileHandling;
+package file.service;
 import java.io.*;
 
-import DatabaseServices.UserDefaultData;
+import database.services.UserDefaultData;
 
 public class FileHandling {
 
@@ -20,12 +20,10 @@ public class FileHandling {
 				writer.println("EmpCode\tName\tEmail\t\t\tCName\tTechnology\tDesignation");
 				writer.println(user.getEmployeeCode() + "\t" + user.getName() + "\t" + user.getEmail() + "\t" + user.getCompanyName() + "\t" + user.getTechnology() + "\t" + user.getDesignation());
 				System.out.println("User information stored in file successfully ");
-			} 
-			catch (IOException e) {
+			} catch (IOException e) {
 				System.err.println("Error writing to file: " + e.getMessage());
 			}
-		} 
-		catch (SecurityException e) {
+		} catch (SecurityException e) {
 			System.err.println("Error creating directory: " + e.getMessage());
 		}
 	}

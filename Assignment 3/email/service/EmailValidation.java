@@ -1,4 +1,4 @@
-package EmailService;
+package email.service;
 
 import java.util.Scanner;
 
