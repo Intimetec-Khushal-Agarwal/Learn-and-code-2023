@@ -1,43 +1,37 @@
 package user.service;
 
 import java.sql.SQLException;
-
-import database.services.DatabaseOperation;
-import database.services.UserDefaultData;
-import email.service.SendEmail;
-import file.service.FileHandling;
+import connection.service.DatabaseConnectionFactory;
+import connection.service.DatabaseOperationService;
+import connection.service.DatabaseOperationServiceManager;
 
 public class NormalUser extends ViewUser {
-	public  void userChoice(int choice) throws SQLException {
-		ViewUser viewData = new ViewUser();
-		boolean isUserExists;
-		DatabaseOperation operation = new DatabaseOperation();
+	
+	DatabaseOperationService databaseOperationService;
+	
+	public NormalUser(DatabaseConnectionFactory databaseObjectType) {
+		super(databaseObjectType);
+		this.databaseOperationService = DatabaseOperationServiceManager.getOperationService(databaseObjectType);
+	}
+
+	public  void performUserAction(int choice) throws SQLException {
 		
-			if(choice ==1 || choice ==2) {
-				viewData.userChoice(choice);
-			} else if (choice == 3) {
-				UserDefaultData user = new UserDefaultData();
-				isUserExists = operation.checkUserAlreadyExists(user.getEmail());
-				if(isUserExists == true) {
-					operation.updateUser(user);
-					FileHandling.saveFile(user);
-					SendEmail.successNotification(user.getEmail());
-				} else {
-					System.out.println("No user found for the current email");
-					SendEmail.failureNotification(user.getEmail());
-				}
+		switch(choice) {
+			case 1:
+			case 2:
+				super.performUserAction(choice);
+				break;
+			case 3:
+				UserUpdationService userUpdationService = new UserUpdationService(databaseOperationService);
+				userUpdationService.updateUser();
+				break;
+			default:
+				System.out.println("Invalid Choice");	
 		}
 	}
 	
-	public void showMenu() {
-		System.out.println("Enter the below choices:\n1.View All User\n2.View User\n3.Update User\n4.Exit");
+	public void displayMenu() {
+		UserMenu.normalUserMenu();
 	}
 	
-	public void processInput(int choice) throws SQLException {
-		if(choice>0 && choice<4) {
-			userChoice(choice);
-		} else {
-			System.out.println("Invalid choice...");
-		}
-	}
 }

@@ -1,19 +1,13 @@
 package database.services;
 
-import java.util.Scanner;
-
-import email.service.EmailValidation;
-
-@SuppressWarnings("resource")
 public class UserDefaultData {
 
 	private String name;
 	private String email;
-
+	
 	public UserDefaultData() {
-		Scanner input = new Scanner(System.in);
-		System.out.println("Enter you Email");
-		this.email = EmailValidation.checkEmail(input.next());
+		this.email = UserDataInput.getUserEmail();
+		this.name = UserDataInput.getUserName();
 	}
 
 	public String getCompanyName() {
@@ -23,6 +17,7 @@ public class UserDefaultData {
 	public String getName() {
 		return this.name;
 	}
+	
 	public void setName(String name) {
 		this.name = name;
 	}
@@ -30,6 +25,7 @@ public class UserDefaultData {
 	public String getEmail() {
 		return this.email;
 	}
+	
 	public void setEmail(String email) {
 		this.email = email;
 	}
