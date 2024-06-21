@@ -1,0 +1,137 @@
+package finalproject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
+public class EmployeeHandler implements RoleHandler {
+
+    private static final String SERVER_ADDRESS = "localhost";
+    private static final int SERVER_PORT = 2709;
+
+    private String employeeId;
+
+    public EmployeeHandler(String employeeId) {
+        this.employeeId = employeeId;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void handleRoleOperations() {
+        {
+            try (Socket socket = new Socket(SERVER_ADDRESS, SERVER_PORT); BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream())); PrintWriter out = new PrintWriter(socket.getOutputStream(), true); BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in))) {
+
+                System.out.println("Connected to the server");
+                while (true) {
+                    System.out.println("Enter command (selectMenuItem, giveFeedback, exit): ");
+                    String command = consoleReader.readLine();
+
+                    JSONObject employeeData = new JSONObject();
+
+                    if (command.equals("exit")) {
+                        break;
+                    }
+
+                    switch (command) {
+                        case "selectMenuItem":
+                            employeeData.put("requestType", "checkUserVote");
+                            employeeData.put("userId", this.employeeId);
+
+                            String checkVoteJson = employeeData.toJSONString();
+                            System.out.println("Checking if user has already voted: " + checkVoteJson);
+                            out.println(checkVoteJson + "\n");
+                            out.flush();
+                            String voteCheckResponse = in.readLine();
+                            JSONObject voteCheckResponseJson = (JSONObject) new JSONParser().parse(voteCheckResponse);
+                            boolean hasVoted = (boolean) voteCheckResponseJson.get("hasVoted");
+                            if (hasVoted) {
+                                System.out.println("You have already voted for the day");
+                                break;
+                            } else {
+                                System.out.println("Requesting menu from server...");
+                                String[] mealTypes = {"breakfast", "lunch", "dinner"};
+                                Map<String, List<String>> mealSelections = new HashMap<>();
+                                int cnt = 0;
+                                for (String mealType : mealTypes) {
+                                    cnt++;
+                                    employeeData.put("requestType", "showRollOutMenuItems");
+                                    employeeData.put("mealType", cnt);
+                                    String showMenu = employeeData.toJSONString();
+
+                                    System.out.println("Sending JSON: " + showMenu);
+                                    out.println(showMenu + "\n");
+                                    out.flush();
+
+                                    System.out.println("Menu for " + mealType + ":");
+                                    String responseLine;
+                                    StringBuilder responseBuilder = new StringBuilder();
+
+                                    // Read the response until the delimiter is encountered
+                                    while ((responseLine = in.readLine()) != null) {
+                                        if (responseLine.equals("---END OF MENU---")) {
+                                            break;
+                                        }
+                                        responseBuilder.append(responseLine).append("\n");
+                                    }
+
+                                    // Print the response to the console
+                                    System.out.println(responseBuilder.toString());
+
+                                    // Get the user input for selected items
+                                    List<String> itemIds = new ArrayList<>();
+                                    System.out.println("Select items for " + mealType + ":");
+                                    String itemId = consoleReader.readLine();
+                                    itemIds.add(itemId);
+                                    mealSelections.put(mealType, itemIds);
+                                }
+                                JSONObject newData = new JSONObject();
+                                newData.put("selectedItems", mealSelections);
+                                newData.put("requestType", "processSelectedItems");
+                                newData.put("userId", this.employeeId);
+
+                                String selectedItemsJson = newData.toJSONString();
+                                System.out.println("Sending JSON with selected items: " + selectedItemsJson);
+                                out.println(selectedItemsJson + "\n");
+                                out.flush();
+                            }
+
+                            break;
+
+                        case "giveFeedback":
+                            System.out.println("Enter item ID: ");
+                            String feedbackItemId = consoleReader.readLine();
+                            System.out.println("Enter comment: ");
+                            String comment = consoleReader.readLine();
+                            System.out.println("Enter rating (1-5): ");
+                            int rating = Integer.parseInt(consoleReader.readLine());
+                            employeeData.put("feedbackItemId", feedbackItemId);
+                            employeeData.put("feedbackEmployeeId", this.employeeId);
+                            employeeData.put("comment", comment);
+                            employeeData.put("rating", rating);
+                            break;
+                        default:
+                            System.out.println("Invalid command");
+                    }
+                    String data = employeeData.toJSONString();
+                    out.println(data);
+                    out.flush();
+                    String response = in.readLine();
+                    System.out.println("Server response: " + response);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ParseException ex) {
+            }
+        }
+    }
+}
