@@ -120,6 +120,16 @@ public class Database {
                     + ")";
             stmt.execute(createSelectedItemTable);
 
+            String createPreparedMenuTable = "CREATE TABLE IF NOT EXISTS prepared_menu ("
+                    + "id INT AUTO_INCREMENT PRIMARY KEY,"
+                    + "menu_item_id INT NOT NULL,"
+                    + "prepared_date DATE NOT NULL,"
+                    + "FOREIGN KEY (menu_item_id) REFERENCES menu_items(menu_item_id)"
+                    + ")";
+            stmt.execute(createPreparedMenuTable);
+
+            
+
         } catch (SQLException e) {
             System.out.println(e);
         }
