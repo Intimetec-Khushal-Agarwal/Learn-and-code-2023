@@ -40,16 +40,21 @@ public class AuthorizationService implements ClientRequestHandler {
     private void login(JSONObject jsonData, PrintWriter out) {
         String employeeId = (String) jsonData.get("userId");
         String name = (String) jsonData.get("name");
+
+        System.out.println("employeeId " + employeeId);
+        System.out.println("name" + name);
         try (Connection conn = Database.getConnection()) {
             PreparedStatement stmt = conn.prepareStatement(LOGIN_QUERY);
             stmt.setInt(1, Integer.parseInt(employeeId));
             stmt.setString(2, name);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
+                System.out.println("Inside rsNext login");
                 int roleId = rs.getInt("role_id");
                 JSONObject response = new JSONObject();
                 response.put("status", "success");
                 response.put("role", roleId);
+                System.out.println(response.toJSONString());
                 out.println(response.toJSONString());
             } else {
                 JSONObject response = new JSONObject();
@@ -83,6 +88,14 @@ public class AuthorizationService implements ClientRequestHandler {
             stmt.setString(4, operations);
             //int rowsInserted = stmt.executeUpdate();
             stmt.executeUpdate();
+
+            // JSONObject response = new JSONObject();
+            // if (rowsInserted > 0) {
+            //     response.put("status", "success");
+            // } else {
+            //     response.put("status", "fail");
+            // }
+            // out.println(response.toJSONString());
         } catch (SQLException e) {
             JSONObject response = new JSONObject();
             response.put("status", "error");
@@ -95,20 +108,19 @@ public class AuthorizationService implements ClientRequestHandler {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
         String[] parts = timeString.split("\\.");
         LocalDateTime time = LocalDateTime.parse(parts[0], formatter);
-
+    
         if (parts.length > 1) {
             String fractionalSeconds = parts[1];
             fractionalSeconds = String.format("%-9s", fractionalSeconds).replace(' ', '0'); // Pad to nanoseconds
             time = time.plusNanos(Long.parseLong(fractionalSeconds));
         }
-
+    
         return Timestamp.valueOf(time);
     }
-
     private void showUserLogs(PrintWriter out) {
 
         try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(SHOW_USER_LOGS_QUERY); ResultSet rs = stmt.executeQuery()) {
-
+  
             out.println("User Logs:");
             out.printf("%-7s%-10s%-15s%-10s%-25s%-25s%-200s\n", "Log Id", "UserId", "Name", "Role", "loginTime", "LogoutTime", "Operations");
             out.println("---------------------------------------------------------------------------------");
