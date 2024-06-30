@@ -33,7 +33,6 @@ public class EmployeeHandler implements RoleHandler {
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
             BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
-            System.out.println("Connected to the server");
             while (true) {
                 System.out.println("Enter command (selectMenuItem, giveFeedback, exit): ");
                 String command = consoleReader.readLine();

@@ -13,7 +13,6 @@ class AdminService<JsonData> implements ClientRequestHandler {
 
     @Override
     public void handleRequest(JSONObject jsonData, PrintWriter out) throws IOException {
-        System.out.println("Inside handle request");
 
         String action = (String) jsonData.get("requestType");
         System.out.println("Inside handle request" + action);

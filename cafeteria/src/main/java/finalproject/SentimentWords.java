@@ -9,67 +9,60 @@ import java.util.stream.Collectors;
 
 public class SentimentWords {
 
-    final static Set<String> a1 = new HashSet<>(Arrays.asList("Awful", "Horrible", "Terrible", "Disgusting", "Hate", "Unbearable",
-            "Repulsive", "Atrocious", "Dreadful", "Appalling", "Abysmal", "Nauseating",
-            "Revolting", "Loathsome", "Deplorable", "Abominable", "Vile", "Detestable",
-            "Unpleasant", "Inferior", "Miserable", "Horrendous", "Distasteful", "Grotesque",
-            "Horrific", "Foul", "Putrid", "Vicious", "Heinous", "Diabolical", "wow", "very good")).stream().map(String::toLowerCase).collect(Collectors.toSet());
+    final static Set<String> a1 = new HashSet<>(Arrays.asList("awful", "horrible", "terrible", "disgusting", "hate", "unbearable",
+            "repulsive", "atrocious", "dreadful", "appalling", "abysmal", "nauseating",
+            "revolting", "loathsome", "deplorable", "abominable", "vile", "detestable",
+            "unpleasant", "inferior", "miserable", "horrendous", "distasteful", "grotesque",
+            "horrific", "foul", "putrid", "vicious", "heinous", "diabolical", "worst", "tasteless", "awful"));
 
-    final static Set<String> a2 = new HashSet<>(Arrays.asList("Bad", "Poor", "Disliked", "Unsatisfactory", "Subpar", "Mediocre", "Unpleasant",
-            "Disappointing", "Inferior", "Lacking", "Unimpressive", "Deficient", "Lousy",
-            "Substandard", "Unacceptable", "Faulty", "Flawed", "Inadequate", "Defective",
-            "Unappealing", "Lamentable", "Unfortunate", "Second-rate", "Shoddy", "Mediocre",
-            "Substandard", "Unfulfilling", "Regrettable", "Lackluster", "Passable")).stream().map(String::toLowerCase).collect(Collectors.toSet());
+    final static Set<String> a2 = new HashSet<>(Arrays.asList("bad", "poor", "disliked", "unsatisfactory", "subpar", "mediocre", "unpleasant",
+            "disappointing", "inferior", "lacking", "unimpressive", "deficient", "lousy",
+            "substandard", "unacceptable", "faulty", "flawed", "inadequate", "defective",
+            "unappealing", "lamentable", "unfortunate", "second-rate", "shoddy", "mediocre",
+            "substandard", "unfulfilling", "regrettable", "lackluster", "passable"));
 
-    final static Set<String> a3 = new HashSet<>(Arrays.asList("Average", "Okay", "Fine", "Satisfactory", "Indifferent", "Moderate", "Fair",
-            "Unremarkable", "Tolerable", "Middling", "Passable", "Standard", "Acceptable",
-            "Usual", "Ordinary", "Plain", "Commonplace", "Middling", "Routine", "Regular",
-            "So-so", "Workable", "Decent", "Moderate", "Reasonable", "Mediocre", "Average",
-            "All right", "Standard", "Adequate")).stream().map(String::toLowerCase).collect(Collectors.toSet());
+    final static Set<String> a3 = new HashSet<>(Arrays.asList("average", "okay", "fine", "satisfactory", "indifferent", "moderate", "fair",
+            "unremarkable", "tolerable", "middling", "passable", "standard", "acceptable",
+            "usual", "ordinary", "plain", "commonplace", "middling", "routine", "regular",
+            "so-so", "workable", "decent", "moderate", "reasonable", "mediocre", "average",
+            "all right", "standard", "adequate", "can", "be"));
 
-    final static Set<String> a4 = new HashSet<>(Arrays.asList("Good", "Enjoyable", "Pleasant", "Satisfying", "Nice", "Liked", "Delightful",
-            "Pleasing", "Admirable", "Commendable", "Worthy", "Gratifying", "Pleasurable",
-            "Appealing", "Lovely", "Congenial", "Agreeable", "Charming", "Delightful",
-            "Rewarding", "Pleasurable", "Favorable", "Admirable", "Superior", "Nice",
-            "Praiseworthy", "Positive", "Gratifying", "Encouraging", "Pleasant")).stream().map(String::toLowerCase).collect(Collectors.toSet());
+    final static Set<String> a4 = new HashSet<>(Arrays.asList("good", "enjoyable", "pleasant", "satisfying", "nice", "liked", "delightful",
+            "pleasing", "admirable", "commendable", "worthy", "gratifying", "pleasurable",
+            "appealing", "lovely", "congenial", "agreeable", "charming", "delightful",
+            "rewarding", "pleasurable", "favorable", "admirable", "superior", "nice",
+            "praiseworthy", "positive", "gratifying", "encouraging", "pleasant"));
 
-    final static Set<String> a5 = new HashSet<>(Arrays.asList("Excellent", "Fantastic", "Amazing", "Wonderful", "Outstanding", "Superb",
-            "Love", "Exceptional", "Marvelous", "Brilliant", "Terrific", "Remarkable",
-            "Phenomenal", "Extraordinary", "Magnificent", "Perfect", "Splendid",
-            "Glorious", "Stellar", "Exquisite", "Superb", "Unmatched", "Unbeatable",
-            "Impressive", "Stunning", "Sensational", "Divine", "Awesome", "Superior",
-            "Top-notch", "wow", "very good")).stream().map(String::toLowerCase).collect(Collectors.toSet());
+    final static Set<String> a5 = new HashSet<>(Arrays.asList("excellent", "fantastic", "amazing", "wonderful", "outstanding", "superb",
+            "love", "exceptional", "marvelous", "brilliant", "terrific", "remarkable",
+            "phenomenal", "extraordinary", "magnificent", "perfect", "splendid",
+            "glorious", "stellar", "exquisite", "superb", "unmatched", "unbeatable",
+            "impressive", "stunning", "sensational", "divine", "awesome", "superior",
+            "top-notch", "wow"));
 
-    public static Map<Integer, Set<String>> sentimentann(String feedback) {
-        System.out.println("feedback: " + feedback);
-        Map<Integer, Set<String>> mapping2 = new HashMap<>();
-        int a1Count = 0;
-        int a2Count = 0;
-        int a3Count = 0;
-        int a4Count = 0;
-        int a5Count = 0;
-        int score = 0;
+    public static Map<Double, Set<String>> sentiments(String feedback) {
+        System.out.println("feedback " + feedback);
+        Map<Double, Set<String>> mapping = new HashMap<>();
 
+        // Split feedback into words
         String[] words = feedback.toLowerCase().split("\\s+");
-        for (String word : words) {
-            System.out.println("dk " + word);
-            if (a1.contains(Arrays.toString(words))) {
-                a1Count++;
-                System.out.println("a1Count" + a1Count);
-            } else if (a2.contains(word)) {
-                a2Count++;
-                System.out.println("a2Count" + a2Count);
-            } else if (a3.contains(word)) {
-                a3Count++;
-                System.out.println("a3Count" + a3Count);
-            } else if (a4.contains(word)) {
-                a4Count++;
-                System.out.println("a4Count" + a4Count);
-            } else if (a5.contains(word)) {
-                a5Count++;
-                System.out.println("a5Count" + a5Count);
-            }
-        }
+        System.out.println("words " + Arrays.toString(words));
+
+        // Count occurrences in each sentiment category
+        int a1Count = countWordsInSet(words, a1);
+        int a2Count = countWordsInSet(words, a2);
+        int a3Count = countWordsInSet(words, a3);
+        int a4Count = countWordsInSet(words, a4);
+        int a5Count = countWordsInSet(words, a5);
+
+        System.out.println("a1Count " + a1Count);
+        System.out.println("a2Count " + a2Count);
+        System.out.println("a3Count " + a3Count);
+        System.out.println("a4Count " + a4Count);
+        System.out.println("a5Count " + a5Count);
+
+        // Determine sentiment score based on counts
+        int score;
         if (a1Count > a2Count && a1Count > a3Count && a1Count > a4Count && a1Count > a5Count) {
             score = 1;
         } else if (a2Count > a1Count && a2Count > a3Count && a2Count > a4Count && a2Count > a5Count) {
@@ -81,63 +74,77 @@ public class SentimentWords {
         } else if (a5Count > a1Count && a5Count > a2Count && a5Count > a3Count && a5Count > a4Count) {
             score = 5;
         } else {
-            score = 3;
+            score = 3; // Default to neutral if there's no clear sentiment
         }
-        System.out.println("score: " + score);
-        mapping2 = extractSentimentWords(feedback, score);
-        System.out.println("mapping2: " + mapping2);
-        return mapping2;
+
+        // Extract sentiment words for the determined score
+        double finalScore = convertScoreToPercent(score);
+        Set<String> sentimentWords = extractSentimentWords(words, score);
+        mapping.put(finalScore, sentimentWords);
+
+        return mapping;
     }
 
-    public static Map<Integer, Set<String>> extractSentimentWords(String feedback, int score) {
+    private static int countWordsInSet(String[] words, Set<String> wordSet) {
+        return (int) Arrays.stream(words).filter(wordSet::contains).count();
+    }
+
+    private static Set<String> extractSentimentWords(String[] words, int score) {
         Set<String> sentimentWords = new HashSet<>();
-        String[] words = feedback.toLowerCase().split("\\s+");
-        System.out.println("words: " + Arrays.toString(words));
-        Map<Integer, Set<String>> mapping = new HashMap<>();
+
         switch (score) {
             case 1:
-                for (String word : words) {
-                    if (a1.contains(word)) {
-                        sentimentWords.add(Arrays.toString(words));
-                    }
-                }
+                sentimentWords.addAll(Arrays.stream(words)
+                        .filter(a1::contains)
+                        .collect(Collectors.toSet()));
                 break;
             case 2:
-                for (String word : words) {
-                    if (a2.contains(word)) {
-                        sentimentWords.add(Arrays.toString(words));
-                    }
-                }
+                sentimentWords.addAll(Arrays.stream(words)
+                        .filter(a2::contains)
+                        .collect(Collectors.toSet()));
                 break;
             case 3:
-                for (String word : words) {
-                    if (a3.contains(word)) {
-                        sentimentWords.add(Arrays.toString(words));
-                    }
-                }
+                sentimentWords.addAll(Arrays.stream(words)
+                        .filter(a3::contains)
+                        .collect(Collectors.toSet()));
                 break;
             case 4:
-                for (String word : words) {
-                    if (a4.contains(word)) {
-                        sentimentWords.add(Arrays.toString(words));
-                    }
-                }
+                sentimentWords.addAll(Arrays.stream(words)
+                        .filter(a4::contains)
+                        .collect(Collectors.toSet()));
                 break;
             case 5:
-                System.out.println("score in words: " + score);
-                for (String word : words) {
-                    System.out.println("mapping: " + mapping);
-                    System.out.println("word: " + Arrays.toString(words));
-                    if (a5.contains(word)) {
-                        sentimentWords.add(Arrays.toString(words));
-                    }
-                }
+                sentimentWords.addAll(Arrays.stream(words)
+                        .filter(a5::contains)
+                        .collect(Collectors.toSet()));
                 break;
             default:
+                // Default to an empty set if no sentiment words found
                 break;
         }
-        mapping.put(score, sentimentWords);
-        System.out.println("mapping: " + mapping);
-        return mapping;
+        if (sentimentWords.isEmpty()) {
+            Set<String> defaultValue = new HashSet<>();
+            defaultValue.add("Neutral");
+            return defaultValue;
+        }
+
+        return sentimentWords;
+    }
+
+    public static double convertScoreToPercent(int score) {
+        switch (score) {
+            case 1:
+                return 0.0;
+            case 2:
+                return 25.0;
+            case 3:
+                return 50.0;
+            case 4:
+                return 75.0;
+            case 5:
+                return 100.0;
+            default:
+                return 50.0; // Default to 50% for neutral or unknown scores
+        }
     }
 }

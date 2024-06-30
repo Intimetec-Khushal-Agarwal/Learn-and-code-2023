@@ -14,17 +14,10 @@ public class Server {
     @SuppressWarnings("resource")
     public static void main(String[] args) throws IOException {
         ServerSocket serverSocket = new ServerSocket(PORT);
-        System.out.println("Server started on port " + PORT);
         Database.createTables();
-
-        int count = 0;
 
         while (true) {
             Socket clientSocket = serverSocket.accept();
-            System.out.println("Client connected");
-            count++;
-            System.out.println("No of clients" + count);
-
             pool.execute(new ClientHandler(clientSocket));
         }
     }

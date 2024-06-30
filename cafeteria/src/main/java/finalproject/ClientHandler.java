@@ -11,36 +11,44 @@ import java.util.Map;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-class ClientHandler implements Runnable {
+public class ClientHandler implements Runnable {
 
-    private Socket clientSocket;
-    private Map<String, ClientRequestHandler> requestHandlers;
+    private final Socket clientSocket;
+    private final Map<String, ClientRequestHandler> requestHandlers;
 
     public ClientHandler(Socket socket) {
         this.clientSocket = socket;
-        initializeRequestHandlers();
+        this.requestHandlers = initializeRequestHandlers();
     }
 
-    @SuppressWarnings("rawtypes")
-    private void initializeRequestHandlers() {
-        requestHandlers = new HashMap<>();
-        requestHandlers.put("login", new AuthorizationService());
-        requestHandlers.put("showMenu", new AdminService());
-        requestHandlers.put("addMenuItem", new AdminService());
-        requestHandlers.put("updateMenuItem", new AdminService());
-        requestHandlers.put("deleteMenuItem", new AdminService());
-        requestHandlers.put("showRollOutMenuItems", new EmployeeServer());
-        requestHandlers.put("processSelectedItems", new EmployeeServer());
-        requestHandlers.put("checkUserVote", new EmployeeServer());
-        requestHandlers.put("createRecommendation", new ChefServer());
-        requestHandlers.put("generateReport", new ChefServer());
-        requestHandlers.put("selectMenuItem", new EmployeeServer());
-        requestHandlers.put("chefSelectedMenuItem", new ChefServer());
-        requestHandlers.put("giveFeedback", new FeedbackService());
-        requestHandlers.put("showRolloutMenuByVote", new ChefServer());
-        requestHandlers.put("insertRollOutMenuItem", new ChefServer());
-        requestHandlers.put("viewRecommendations", new RecommendationService());
-        requestHandlers.put("checkExistingFeedback", new FeedbackService());
+    private Map<String, ClientRequestHandler> initializeRequestHandlers() {
+        Map<String, ClientRequestHandler> handlers = new HashMap<>();
+        handlers.put("login", new AuthorizationService());
+        handlers.put("userLogs", new AuthorizationService());
+        handlers.put("discardMenuItem", new DiscardMenuItemService());
+        handlers.put("storeDiscardedItem", new DiscardMenuItemService());
+        handlers.put("showDiscardMenuItems", new DiscardMenuItemService());
+        handlers.put("showUserLogs", new AuthorizationService());
+        handlers.put("showMenu", new AdminServerController());
+        handlers.put("addMenuItem", new AdminServerController());
+        handlers.put("updateMenuItem", new AdminServerController());
+        handlers.put("deleteMenuItem", new AdminServerController());
+        handlers.put("showRollOutMenuItems", new EmployeeServer());
+        handlers.put("processSelectedItems", new EmployeeServer());
+        handlers.put("checkUserVote", new EmployeeServer());
+        handlers.put("createRecommendation", new ChefServer());
+        handlers.put("generateReport", new ChefServer());
+        handlers.put("selectMenuItem", new EmployeeServer());
+        handlers.put("storeSelectedItemsInPreparedMenu", new ChefServer());
+        handlers.put("giveFeedback", new FeedbackService());
+        handlers.put("showRolloutMenuByVote", new ChefServer());
+        handlers.put("insertRollOutMenuItem", new ChefServer());
+        handlers.put("viewRecommendations", new RecommendationService());
+        handlers.put("checkExistingFeedback", new FeedbackService());
+        handlers.put("viewNotification", new NotificationService());
+        handlers.put("updateUserProfile", new updateProfileServer());
+
+        return handlers;
     }
 
     @Override
@@ -49,19 +57,22 @@ class ClientHandler implements Runnable {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
             handleClientRequests(in, out);
         } catch (IOException ex) {
-            System.out.println("Input output exception");
+            System.out.println("Error handling client: " + ex.getMessage());
         } finally {
-            System.out.println("Inside finally");
             closeSocket();
         }
     }
 
     private void handleClientRequests(BufferedReader in, PrintWriter out) throws IOException {
         String line;
-        while (true) {
+        while ((line = in.readLine()) != null) {
             StringBuilder requestBuilder = new StringBuilder();
-            while ((line = in.readLine()) != null && !line.isEmpty()) {
-                requestBuilder.append(line).append("\n");
+            requestBuilder.append(line);
+
+            if (!line.isEmpty()) {
+                while (in.ready() && (line = in.readLine()) != null) {
+                    requestBuilder.append("\n").append(line);
+                }
             }
 
             String requestData = requestBuilder.toString().trim();
@@ -69,30 +80,29 @@ class ClientHandler implements Runnable {
                 continue;
             }
 
-            System.out.println("request Builder " + requestData);
+            System.out.println("Request received:\n" + requestData);
 
             JSONObject jsonData = (JSONObject) JSONValue.parse(requestData);
             if (jsonData != null) {
                 handleRequest(jsonData, out);
+                String requestType = (String) jsonData.get("requestType");
+                if ("exit".equalsIgnoreCase(requestType)) {
+                    break;
+                }
             } else {
                 out.println("Invalid JSON data.");
-            }
-
-            System.out.println((String) jsonData.get("requestType"));
-            if ("exit".equalsIgnoreCase((String) jsonData.get("requestType"))) {
-                break;
             }
         }
     }
 
     private void handleRequest(JSONObject jsonData, PrintWriter out) throws IOException {
-        String requestType = (String) jsonData.get("requestType");//login
-        ClientRequestHandler handler = requestHandlers.get(requestType);// = new AuthorziationService();
+        String requestType = (String) jsonData.get("requestType");
+        ClientRequestHandler handler = requestHandlers.get(requestType);
 
         if (handler != null) {
             handler.handleRequest(jsonData, out);
         } else {
-            out.println("Invalid request");
+            out.println("Invalid request type: " + requestType);
         }
     }
 
@@ -100,6 +110,7 @@ class ClientHandler implements Runnable {
         try {
             if (clientSocket != null && !clientSocket.isClosed()) {
                 clientSocket.close();
+                System.out.println("Client connection closed.");
             }
         } catch (IOException e) {
             System.out.println("Error closing socket: " + e.getMessage());
