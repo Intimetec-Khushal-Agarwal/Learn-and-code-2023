@@ -26,10 +26,8 @@ public class ChefHandler implements RoleHandler {
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
             BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
-            System.out.println("Connected to the server");
 
             while (true) {
-                System.out.println(socket);
                 System.out.println("Enter command (createRecommendation\ncreateRollOutMenu\ngenerateReport\nselectMenu\nexit): ");
                 String command = consoleReader.readLine();
 
