@@ -6,309 +6,151 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-class ChefServer<JsonData> implements ClientRequestHandler {
+public class ChefServer implements ClientRequestHandler {
+
+    private static final String SELECT_ROLLOUT_MENU_ITEMS_QUERY
+            = "SELECT rmi.rollout_item_id, mi.menu_item_id, mi.name, mi.price, mi.rating, mi.sentiments, rmi.rollout_date, rmi.vote "
+            + "FROM rollout_menu_items rmi "
+            + "JOIN menu_items mi ON rmi.menu_item_id = mi.menu_item_id "
+            + "WHERE rmi.meal_type_id = ? AND rmi.rollout_date = ?";
+
+    private static final String INSERT_ROLLOUT_MENU_ITEM_QUERY
+            = "INSERT INTO rollout_menu_items (menu_item_id, rollout_date, meal_type_id) VALUES (?, ?, ?)";
+
+    private static final String INSERT_PREPARED_MENU_QUERY
+            = "INSERT INTO prepared_menu (menu_item_id, prepared_date) VALUES (?, CURRENT_DATE)";
 
     @Override
     public void handleRequest(JSONObject jsonData, PrintWriter out) throws IOException {
-        System.out.println("Inside handle request");
-
         String action = (String) jsonData.get("requestType");
-        System.out.println("Inside handle request" + action);
+        System.out.println("Handling request: " + action);
+
         switch (action) {
-            case "showRollOutMenuItems":
-                showRollOutMenuItems(jsonData, out);
-                break;
-            case "processSelectedItems":
-                processSelectedItems(jsonData, out);
-                break;
-            case "checkUserVote":
-                checkUserVote(jsonData, out);
-                break;
-            case "showRolloutMenuByVote":
+            case "showRolloutMenuByVote" ->
                 showRollOutMenuByVote(jsonData, out);
-                break;
-            case "selectedMenuItem":
-                selectedMenuItem(jsonData, out);
-                break;
-            case "insertRollOutMenuItem":
+            case "insertRollOutMenuItem" ->
                 insertRollOutMenuItem(jsonData, out);
-                break;
-            default:
+            case "storeSelectedItemsInPreparedMenu" ->
+                storeSelectedItemsInPreparedMenu(jsonData, out);
+            default -> {
                 out.println("Invalid menu action");
-        }
-    }
-
-    public <JsonData> void showMenuItems(JsonData jsonData, PrintWriter out) {
-
-        try (Connection conn = Database.getConnection()) {
-            String sql = "SELECT menu_item_id, name, price, availability_status, menu_types.meal_type, sentiments "
-                    + "FROM menu_items "
-                    + "RIGHT JOIN menu_types ON menu_items.meal_type_id = menu_types.meal_type_id";
-            try (PreparedStatement stmt = conn.prepareStatement(sql); ResultSet rs = stmt.executeQuery()) {
-
-                out.println("Menu Items:");
-                out.printf("%-10s%-35s%-20s%-10s%-15s%-15s\n", "itemId", "name", "price", "status", "mealType", "sentiments");
-                out.println("---------------------------------------------------------------------------------");
-
-                while (rs.next()) {
-                    int itemId = rs.getInt("menu_item_id");
-                    String name = rs.getString("name");
-                    float price = rs.getFloat("price");
-                    String status = rs.getString("availability_status");
-                    String mealType = rs.getString("meal_type");
-                    String sentiments = rs.getString("sentiments");
-
-                    out.printf("%-10d%-35s%-20.2f%-10s%-15s%-15s\n", itemId, name, price, status, mealType, sentiments);
-                }
-                out.println("\n");
+                out.println("END_OF_RESPONSE");
                 out.flush();
-            } catch (SQLException e) {
-                out.println("Error showing menu item: " + e.getMessage());
             }
-        } catch (SQLException e) {
-            out.println("Database connection error: " + e.getMessage());
         }
-
     }
 
-    @SuppressWarnings("unchecked")
-    public void showRollOutMenuItems(JSONObject jsonData, PrintWriter out) {
+    private void showRollOutMenuByVote(JSONObject jsonData, PrintWriter out) {
         int mealType = ((Long) jsonData.get("mealType")).intValue();
         java.sql.Date currentDate = new java.sql.Date(System.currentTimeMillis());
-        System.out.println("mealType: " + mealType);
 
         try (Connection conn = Database.getConnection()) {
-            PreparedStatement stmt = conn.prepareStatement(
-                    "SELECT rollout_item_id, name, price, rating, sentiments,recommended_date FROM rollout_menu_items WHERE meal_type_id = ? and recommended_date = ?"
-            );
+            PreparedStatement stmt = conn.prepareStatement(SELECT_ROLLOUT_MENU_ITEMS_QUERY);
             stmt.setInt(1, mealType);
             stmt.setDate(2, currentDate);
+
             ResultSet rs = stmt.executeQuery();
+            List<String> menuItems = formatMenuItems(rs);
+            sendResponse(out, menuItems, getRolloutMenuHeaders());
 
-            out.println("Menu Items:");
-            out.println("ID\tName\t\tPrice\t\tRating\t\tSentiments");
-            out.println("---------------------------------------------------------");
-            while (rs.next()) {
-                int itemId = rs.getInt("rollout_item_id");
-                String name = rs.getString("name");
-                float price = rs.getFloat("price");
-                int rating = rs.getInt("rating");
-                String sentiments = rs.getString("sentiments");
-                out.println(itemId + "\t" + name + "\t\t" + price + "\t" + rating + "\t" + sentiments);
-            }
-            // Add a delimiter to indicate the end of the response
-            out.println("---END OF MENU---");
-            out.flush();
         } catch (SQLException e) {
-            out.println("Error retrieving menu items");
-            out.println("---END OF MENU---");
-            out.flush();
-            e.printStackTrace(); // For server-side logging
+            handleSQLException(out, e);
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private void selectMenuItem(JSONObject jsonData, PrintWriter out) {
-        List<String> itemIds = (List<String>) jsonData.get("itemIds");
-        String employeeId = (String) jsonData.get("employeeId");
-
-        try (Connection conn = Database.getConnection()) {
-            for (String itemId : itemIds) {
-                PreparedStatement stmt = conn.prepareStatement("INSERT INTO selected_menu_items (menu_item_id, employee_id) VALUES (?, ?)");
-                stmt.setInt(1, Integer.parseInt(itemId));
-                stmt.setString(2, employeeId);
-                int rowsInserted = stmt.executeUpdate();
-                if (rowsInserted > 0) {
-                    out.println("Menu item " + itemId + " selected successfully");
-                } else {
-                    out.println("Failed to select menu item " + itemId);
-                }
-            }
-        } catch (SQLException e) {
-            out.println("Error selecting menu items");
-            e.printStackTrace(out);
-        }
-    }
-
-    public void processSelectedItems(JSONObject jsonData, PrintWriter out) {
-        JSONObject selectedItems = (JSONObject) jsonData.get("selectedItems");
-        String userId = (String) jsonData.get("userId");
-        try (Connection conn = Database.getConnection()) {
-            for (Object key : selectedItems.keySet()) {
-                String mealType = (String) key;
-                List<String> itemIds = (List<String>) selectedItems.get(mealType);
-                List<Integer> intItemIds = itemIds.stream().map(Integer::parseInt).collect(Collectors.toList());
-                System.out.println(intItemIds);
-                for (int itemId : intItemIds) {
-                    incrementVoteForItem(conn, itemId, out);
-                }
-            }
-            insertUserVote(conn, userId, out);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void incrementVoteForItem(Connection conn, int itemId, PrintWriter out) {
-        String updateVoteSQL = "UPDATE rollout_menu_items SET vote = vote + 1 WHERE rollout_item_id = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(updateVoteSQL)) {
-            stmt.setInt(1, itemId);
-            int rowsUpdated = stmt.executeUpdate();
-            if (rowsUpdated > 0) {
-            } else {
-                out.println("Failed to vote menu item");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void insertUserVote(Connection conn, String userId, PrintWriter out) throws SQLException {
-        java.sql.Date voteDate = new java.sql.Date(System.currentTimeMillis());
-        String insertUserVoteSQL = "INSERT INTO user_vote (user_id, vote_date) VALUES (?, ?)";
-        try (PreparedStatement insertStmt = conn.prepareStatement(insertUserVoteSQL)) {
-            insertStmt.setInt(1, Integer.parseInt(userId));
-            insertStmt.setDate(2, voteDate);
-            int rowsInserted = insertStmt.executeUpdate();
-            if (rowsInserted > 0) {
-                out.println("Thankyou for voting");
-            } else {
-
-            }
-        }
-
-    }
-
-    @SuppressWarnings("unchecked")
-    private void checkUserVote(JSONObject jsonData, PrintWriter out) {
-        String userId = (String) jsonData.get("userId");
+    private void insertRollOutMenuItem(JSONObject jsonData, PrintWriter out) {
+        int itemId = ((Long) jsonData.get("menu_item_id")).intValue();
+        int mealId = ((Long) jsonData.get("meal_type_id")).intValue();
         java.sql.Date currentDate = new java.sql.Date(System.currentTimeMillis());
 
-        String checkVoteSQL = "SELECT * FROM user_vote WHERE user_id = ? AND vote_date = ?";
-
-        try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(checkVoteSQL)) {
-
-            stmt.setInt(1, Integer.parseInt(userId));
-            stmt.setDate(2, currentDate);
-            ResultSet rs = stmt.executeQuery();
-
-            boolean hasVoted = false;
-            if (rs.next()) {
-                int count = rs.getInt(1);
-                if (count > 0) {
-                    hasVoted = true;
-                }
-            }
-            System.out.println(hasVoted);
-            out.println(hasVoted + "\n");
-            out.flush();
-            // JSONObject response = new JSONObject();
-            // response.put("hasVoted", hasVoted);
-            // out.println(response.toJSONString() + "\n");
-            // out.flush();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            out.println("Error checking user vote");
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public void showRollOutMenuByVote(JSONObject jsonData, PrintWriter out) {
-        int mealType = ((Long) jsonData.get("mealType")).intValue();
-        java.sql.Date currentDate = new java.sql.Date(System.currentTimeMillis());
-        System.out.println("mealType: " + mealType);
-
-        try (Connection conn = Database.getConnection()) {
-            PreparedStatement stmt = conn.prepareStatement(
-                    "SELECT rollout_item_id, name, price, rating, sentiments,recommended_date FROM rollout_menu_items WHERE meal_type_id = ? and recommended_date = ?"
-            );
-            stmt.setInt(1, mealType);
-            stmt.setDate(2, currentDate);
-            ResultSet rs = stmt.executeQuery();
-
-            out.println("Menu Items:");
-            out.println("ID\tName\t\tPrice\t\tRating\t\tSentiments");
-            out.println("---------------------------------------------------------");
-            while (rs.next()) {
-                int itemId = rs.getInt("rollout_item_id");
-                String name = rs.getString("name");
-                float price = rs.getFloat("price");
-                int rating = rs.getInt("rating");
-                String sentiments = rs.getString("sentiments");
-                out.println(itemId + "\t" + name + "\t\t" + price + "\t" + rating + "\t" + sentiments);
-            }
-            out.println("---END OF MENU---");
-            out.flush();
-        } catch (SQLException e) {
-            out.println("Error retrieving menu items");
-            out.println("---END OF MENU---");
-            out.flush();
-            e.printStackTrace(); // For server-side logging
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private void selectedMenuItem(JSONObject jsonData, PrintWriter out) {
-        JSONObject selectedItems = (JSONObject) jsonData.get("selectedItems");
-
-        try (Connection conn = Database.getConnection()) {
-            for (Object key : selectedItems.keySet()) {
-                String mealType = (String) key;
-                List<String> itemIds = (List<String>) selectedItems.get(mealType);
-                List<Integer> intItemIds = itemIds.stream().map(Integer::parseInt).collect(Collectors.toList());
-                System.out.println(intItemIds);
-                for (int itemId : intItemIds) {
-                    storeIntoSelectionTable(conn, itemId, out);
-                }
-            }
-        } catch (SQLException e) {
-            out.println("Error selecting menu items");
-            e.printStackTrace(out);
-        }
-    }
-
-    private void storeIntoSelectionTable(Connection conn, int itemId, PrintWriter out) {
-        String updateVoteSQL = "INSERT INTO selected_items(itemid,recommended_date) values";
-        try (PreparedStatement stmt = conn.prepareStatement(updateVoteSQL)) {
-            stmt.setInt(1, itemId);
-            int rowsUpdated = stmt.executeUpdate();
-            if (rowsUpdated > 0) {
-            } else {
-                out.println("Failed to vote menu item");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void insertRollOutMenuItem(JSONObject itemData, PrintWriter out) {
-        String insertSQL = "INSERT INTO rollout_menu_items (menu_item_id,rollout_date, meal_type_id) VALUES (?, ?, ?)";
-        java.sql.Date currentDate = new java.sql.Date(System.currentTimeMillis());
-        int itemId = ((Long) itemData.get("menu_item_id")).intValue();
-        int meal_id = ((Long) itemData.get("meal_type_id")).intValue();
-
-        try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(insertSQL)) {
-
+        try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(INSERT_ROLLOUT_MENU_ITEM_QUERY)) {
             stmt.setInt(1, itemId);
             stmt.setDate(2, currentDate);
-            stmt.setInt(3, meal_id);
+            stmt.setInt(3, mealId);
 
-            int rowsInserted = stmt.executeUpdate();
-            System.out.println("rowInserted " + rowsInserted);
-            if (rowsInserted > 0) {
-                out.println("Rollout menu item added successfully\n");
-            } else {
-                out.println("Failed to add rollout menu item\n");
-            }
+            stmt.executeUpdate();
+            out.flush();
 
         } catch (SQLException e) {
-            out.println("Error adding rollout menu item");
-            e.printStackTrace();
+            out.println("Error occured in adding menu item");
+            handleSQLException(out, e);
         }
+    }
+
+    private void storeSelectedItemsInPreparedMenu(JSONObject jsonData, PrintWriter out) {
+        JSONArray selectedItems = (JSONArray) jsonData.get("selectedItems");
+
+        try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(INSERT_PREPARED_MENU_QUERY)) {
+            for (Object itemObj : selectedItems) {
+                JSONObject itemMap = (JSONObject) itemObj;
+                JSONArray itemIdsArray = (JSONArray) itemMap.get("menu_item_id");
+
+                for (Object itemIdObj : itemIdsArray) {
+                    String itemId = (String) itemIdObj;
+                    stmt.setInt(1, Integer.parseInt(itemId));
+                    stmt.addBatch();
+                }
+            }
+            int[] rowsInserted = stmt.executeBatch();
+            sendBatchInsertionResponse(out, rowsInserted.length);
+        } catch (SQLException e) {
+            handleSQLException(out, e);
+        }
+    }
+
+    private List<String> formatMenuItems(ResultSet rs) throws SQLException {
+        List<String> menuItems = new ArrayList<>();
+        while (rs.next()) {
+            int menuItemId = rs.getInt("menu_item_id");
+            String name = rs.getString("name");
+            float price = rs.getFloat("price");
+            float rating = rs.getFloat("rating");
+            String sentiments = rs.getString("sentiments");
+            int vote = rs.getInt("vote");
+
+            String formattedItem = String.format("%-4d| %-25s| %-6.2f| %-6.2f| %-26s| %-2d",
+                    menuItemId, name, price, rating, sentiments, vote);
+            menuItems.add(formattedItem);
+        }
+        return menuItems;
+    }
+
+    private void sendResponse(PrintWriter out, List<String> items, String headers) {
+        out.println(headers);
+        items.forEach(out::println);
+        out.println("END_OF_RESPONSE");
+        out.flush();
+    }
+
+    // private void sendInsertionResponse(PrintWriter out, int rowsInserted) {
+    //     if (rowsInserted > 0) {
+    //         out.println("Rollout menu item added successfully");
+    //     } else {
+    //         out.println("Failed to add rollout menu item");
+    //     }
+    //     out.println("END_OF_RESPONSE");
+    //     out.flush();
+    // }
+    private void sendBatchInsertionResponse(PrintWriter out, int rowsInserted) {
+        out.println("Prepared menu items added successfully: " + rowsInserted);
+        out.println("END_OF_RESPONSE");
+        out.flush();
+    }
+
+    private void handleSQLException(PrintWriter out, SQLException e) {
+        out.println("Error processing request: " + e.getMessage());
+        out.println("END_OF_RESPONSE");
+        out.flush();
+    }
+
+    private String getRolloutMenuHeaders() {
+        return String.format("%-4s| %-25s| %-6s| %-6s| %-26s| %-2s",
+                "Item Id", "Name", "Price", "Rating", "Sentiments", "Vote");
     }
 }
