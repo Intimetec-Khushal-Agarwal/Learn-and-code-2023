@@ -1,8 +1,6 @@
 package finalproject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,22 +10,20 @@ import org.json.simple.JSONObject;
 
 public class ChefClient implements RoleHandler {
 
-    private final BufferedReader socketReader;
-    private final PrintWriter socketWriter;
-    private final BufferedReader consoleReader;
     private final List<String> operations;
     private final String employeeId;
     private final DiscardMenuItemController discardMenuItemController;
     LocalDateTime loginTime;
+    private final JsonRequestResponse jsonRequestResponse;
+    private final InputValidations inputValidations;
 
-    public ChefClient(BufferedReader socketReader, PrintWriter socketWriter, BufferedReader consoleReader, String employeeId) {
-        this.socketReader = socketReader;
-        this.socketWriter = socketWriter;
-        this.consoleReader = consoleReader;
+    public ChefClient(DiscardMenuItemController discardMenuItemController, InputValidations inputValidations, JsonRequestResponse jsonRequestResponse, String employeeId) {
         this.employeeId = employeeId;
         this.operations = new ArrayList<>();
         this.loginTime = LocalDateTime.now();
-        this.discardMenuItemController = new DiscardMenuItemController(socketReader, socketWriter, consoleReader);
+        this.discardMenuItemController = discardMenuItemController;
+        this.jsonRequestResponse = jsonRequestResponse;
+        this.inputValidations = inputValidations;
     }
 
     @SuppressWarnings("unchecked")
@@ -38,34 +34,33 @@ public class ChefClient implements RoleHandler {
 
             while (true) {
                 displayMenu();
-                String command = consoleReader.readLine();
+                int command = inputValidations.getValidatedIntInput();
 
-                if (command.equals("5")) {
+                if (command == 5) {
                     JSONObject userActivity = new JSONObject();
                     userActivity.put("requestType", "userLogs");
                     userActivity.put("userId", this.employeeId);
                     userActivity.put("operations", operations);
                     userActivity.put("loginTime", loginTime.toString());
-                    String sendRequest = userActivity.toJSONString();
-                    socketWriter.println(sendRequest + "\n");
+                    jsonRequestResponse.sendRequest(userActivity);
                     System.out.println("Chef logged out successfully");
                     break;
                 }
 
                 switch (command) {
-                    case "1" -> {
+                    case 1 -> {
                         operations.add("viewRecommendation");
                         handleCreateRecommendation();
                     }
-                    case "2" -> {
+                    case 2 -> {
                         operations.add("rolloutMenu");
                         handleCreateRolloutMenu();
                     }
-                    case "3" -> {
+                    case 3 -> {
                         operations.add("selectMenu");
                         handleSelectMenu();
                     }
-                    case "4" -> {
+                    case 4 -> {
                         operations.add("discardMenuItem");
                         discardMenuItemController.discardMenuItems();
                     }
@@ -79,15 +74,15 @@ public class ChefClient implements RoleHandler {
     }
 
     private void displayMenu() {
-        System.out.println("Enter command:\n1. Create Recommendation\n2. Create Rollout Menu\n3. Select Menu\n4.discardMenuItem\n5. Exit");
+        System.out.println("Enter command:\n1. Create Recommendation\n2. Create Rollout Menu\n3. Select Menu\n4. Discard Menu Item\n5. Exit");
     }
 
     @SuppressWarnings("unchecked")
     private void handleCreateRecommendation() throws IOException {
         JSONObject chefDetails = new JSONObject();
         chefDetails.put("requestType", "viewRecommendations");
-        sendRequest(chefDetails);
-        readResponse();
+        jsonRequestResponse.sendRequest(chefDetails);
+        jsonRequestResponse.readResponse();
     }
 
     @SuppressWarnings("unchecked")
@@ -95,41 +90,22 @@ public class ChefClient implements RoleHandler {
         String[] mealTypes = {"breakfast", "lunch", "dinner"};
         for (int i = 0; i < mealTypes.length; i++) {
             String mealType = mealTypes[i];
-            int numberOfItems = getNumberOfItems(mealType);
+            System.out.println("Enter number of items to enter for " + mealType + ": ");
+            int numberOfItems = inputValidations.getValidatedIntInput();
 
             for (int j = 0; j < numberOfItems; j++) {
                 JSONObject itemData = new JSONObject();
-                int menuId = getMenuItemId();
+                System.out.println("Enter itemId to add: ");
+                int menuId = inputValidations.getValidatedIntInput();
 
                 itemData.put("menu_item_id", menuId);
                 itemData.put("meal_type_id", i + 1);
                 itemData.put("requestType", "insertRollOutMenuItem");
-                sendRequest(itemData);
+                jsonRequestResponse.sendRequest(itemData);
+
             }
         }
         System.out.println("Menu Item added successfully");
-    }
-
-    private int getNumberOfItems(String mealType) throws IOException {
-        return getNumericInput("Enter number of items to enter for " + mealType + ": ");
-    }
-
-    private int getMenuItemId() throws IOException {
-        return getNumericInput("Enter menu item ID: ");
-    }
-
-    private int getNumericInput(String prompt) throws IOException {
-        int input;
-        while (true) {
-            try {
-                System.out.println(prompt);
-                input = Integer.parseInt(consoleReader.readLine());
-                break;
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid input. Please enter a valid number.");
-            }
-        }
-        return input;
     }
 
     @SuppressWarnings("unchecked")
@@ -141,7 +117,7 @@ public class ChefClient implements RoleHandler {
             String mealType = mealTypes[i];
             requestMenuFromServer(i);
 
-            String response = readMenuResponse();
+            String response = jsonRequestResponse.readResponseUntilEnd();
             System.out.println("Menu Items for " + mealType + ":\n" + response);
 
             List<String> itemIds = getSelectedItems(mealType);
@@ -155,7 +131,7 @@ public class ChefClient implements RoleHandler {
         }
 
         storeSelectedItems(mealSelections);
-        readResponse();
+        jsonRequestResponse.readResponse();
     }
 
     @SuppressWarnings("unchecked")
@@ -163,17 +139,13 @@ public class ChefClient implements RoleHandler {
         JSONObject menuRequest = new JSONObject();
         menuRequest.put("requestType", "showRolloutMenuByVote");
         menuRequest.put("mealType", mealTypeIndex + 1);
-        sendRequest(menuRequest);
-    }
-
-    private String readMenuResponse() throws IOException {
-        return readResponseUntilEnd();
+        jsonRequestResponse.sendRequest(menuRequest);
     }
 
     private List<String> getSelectedItems(String mealType) throws IOException {
         List<String> itemIds = new ArrayList<>();
         System.out.println("Select items for " + mealType + " (comma separated):");
-        String[] inputItems = consoleReader.readLine().split(",");
+        String[] inputItems = inputValidations.getValidatedStringInput().split(",");
         for (String itemId : inputItems) {
             itemId = itemId.trim();
             if (!itemId.isEmpty()) {
@@ -193,30 +165,6 @@ public class ChefClient implements RoleHandler {
         JSONObject selectedItemsData = new JSONObject();
         selectedItemsData.put("selectedItems", mealSelections);
         selectedItemsData.put("requestType", "storeSelectedItemsInPreparedMenu");
-        sendRequest(selectedItemsData);
-    }
-
-    private void sendRequest(JSONObject requestData) {
-        String request = requestData.toJSONString();
-        socketWriter.println(request + "\n");
-        socketWriter.flush();
-    }
-
-    private void readResponse() throws IOException {
-        System.out.println("Server response: ");
-        String response = readResponseUntilEnd();
-        System.out.println(response);
-    }
-
-    private String readResponseUntilEnd() throws IOException {
-        StringBuilder responseBuilder = new StringBuilder();
-        String responseLine;
-        while ((responseLine = socketReader.readLine()) != null) {
-            if (responseLine.equals("END_OF_RESPONSE")) {
-                break;
-            }
-            responseBuilder.append(responseLine).append("\n");
-        }
-        return responseBuilder.toString();
+        jsonRequestResponse.sendRequest(selectedItemsData);
     }
 }

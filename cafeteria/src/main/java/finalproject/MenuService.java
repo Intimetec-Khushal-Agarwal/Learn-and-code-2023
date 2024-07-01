@@ -17,7 +17,7 @@ public class MenuService {
             + "RIGHT JOIN menu_types ON menu_items.meal_type_id = menu_types.meal_type_id ORDER BY menu_item_id";
 
     private static final String ADD_MENU_ITEM_QUERY
-            = "INSERT INTO menu_items (name, price, availability_status, rating, meal_type_id) VALUES (?, ?, ?, ?, ?)";
+            = "INSERT INTO menu_items (name, price, rating, meal_type_id,food_type_id,food_taste_id,food_preference_id,sweetTooth) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
     private static final String UPDATE_MENU_ITEM_QUERY
             = "UPDATE menu_items SET price = ?, availability_status = ? WHERE menu_item_id = ?";
@@ -41,7 +41,6 @@ public class MenuService {
                 String sentiments = rs.getString("sentiments");
                 out.printf("%-10d%-35s%-20.2f%-10s%-15s%-15s\n", itemId, name, price, status, mealType, sentiments);
             }
-            System.out.println("Response send successfully");
             out.println("END_OF_RESPONSE\n");
             out.flush();
         } catch (SQLException e) {
@@ -52,17 +51,23 @@ public class MenuService {
     public void addMenuItem(JSONObject request, PrintWriter out) {
         String itemName = (String) request.get("name");
         float itemPrice = ((Double) request.get("price")).floatValue();
-        String itemStatus = (String) request.get("status");
         int rating = ((Long) request.get("rating")).intValue();
         int mealType = ((Long) request.get("mealType")).intValue();
+        int foodType = ((Long) request.get("foodType")).intValue();
+        int foodTaste = ((Long) request.get("foodTaste")).intValue();
+        int foodPreference = ((Long) request.get("foodPreference")).intValue();
+        int sweetTooth = ((Long) request.get("sweetTooth")).intValue();
 
         try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(ADD_MENU_ITEM_QUERY, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, itemName);
             stmt.setFloat(2, itemPrice);
-            stmt.setString(3, itemStatus);
-            stmt.setInt(4, rating);
-            stmt.setInt(5, mealType);
+            stmt.setInt(3, rating);
+            stmt.setInt(4, mealType);
+            stmt.setInt(5, foodType);
+            stmt.setInt(6, foodTaste);
+            stmt.setInt(7, foodPreference);
+            stmt.setInt(8, sweetTooth);
 
             int rowsInserted = stmt.executeUpdate();
             if (rowsInserted > 0) {

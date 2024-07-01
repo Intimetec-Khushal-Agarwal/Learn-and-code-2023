@@ -32,20 +32,17 @@ public class ChefServer implements ClientRequestHandler {
         System.out.println("Handling request: " + action);
 
         switch (action) {
-            case "showRolloutMenuByVote":
+            case "showRolloutMenuByVote" ->
                 showRollOutMenuByVote(jsonData, out);
-                break;
-            case "insertRollOutMenuItem":
+            case "insertRollOutMenuItem" ->
                 insertRollOutMenuItem(jsonData, out);
-                break;
-            case "storeSelectedItemsInPreparedMenu":
+            case "storeSelectedItemsInPreparedMenu" ->
                 storeSelectedItemsInPreparedMenu(jsonData, out);
-                break;
-            default:
+            default -> {
                 out.println("Invalid menu action");
                 out.println("END_OF_RESPONSE");
                 out.flush();
-                break;
+            }
         }
     }
 
@@ -131,16 +128,15 @@ public class ChefServer implements ClientRequestHandler {
         out.flush();
     }
 
-    private void sendInsertionResponse(PrintWriter out, int rowsInserted) {
-        if (rowsInserted > 0) {
-            out.println("Rollout menu item added successfully");
-        } else {
-            out.println("Failed to add rollout menu item");
-        }
-        out.println("END_OF_RESPONSE");
-        out.flush();
-    }
-
+    // private void sendInsertionResponse(PrintWriter out, int rowsInserted) {
+    //     if (rowsInserted > 0) {
+    //         out.println("Rollout menu item added successfully");
+    //     } else {
+    //         out.println("Failed to add rollout menu item");
+    //     }
+    //     out.println("END_OF_RESPONSE");
+    //     out.flush();
+    // }
     private void sendBatchInsertionResponse(PrintWriter out, int rowsInserted) {
         out.println("Prepared menu items added successfully: " + rowsInserted);
         out.println("END_OF_RESPONSE");

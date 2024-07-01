@@ -10,17 +10,17 @@ import org.json.simple.JSONObject;
 
 public class updateProfileServer implements ClientRequestHandler {
 
-    private static final String UPDATE_PROFILE_QUERY = "UPDATE users SET food_type_id=?, food_taste_id=?, food_prefernece_id=?, sweetTooth=? WHERE user_id=?";
+    private static final String UPDATE_PROFILE_QUERY = "UPDATE users SET food_type_id=?, food_taste_id=?, food_preference_id=?, sweetTooth=? WHERE user_id=?";
 
+    @Override
     public void handleRequest(JSONObject request, PrintWriter out) throws IOException {
         String action = (String) request.get("requestType");
 
         switch (action) {
-            case "updateUserProfile": {
+            case "updateUserProfile" -> {
                 updateUserProfile(request, out);
-                break;
             }
-            default:
+            default ->
                 out.println("Invalid menu action");
         }
     }

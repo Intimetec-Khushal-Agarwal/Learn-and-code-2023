@@ -18,7 +18,10 @@ public class Client {
     private static BufferedReader socketReader = null;
     private static PrintWriter socketWriter = null;
     private static BufferedReader consoleReader = null;
-    private static String employeeId = null;
+    private static DiscardMenuItemController discardMenuItemController = null;
+    private static int employeeId;
+    private static InputValidations inputValidations;
+    private static JsonRequestResponse jsonRequestResponse;
 
     public static void main(String[] args) {
         try {
@@ -36,21 +39,25 @@ public class Client {
         socketReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         consoleReader = new BufferedReader(new InputStreamReader(System.in));
         socketWriter = new PrintWriter(socket.getOutputStream(), true);
+        inputValidations = new InputValidations(consoleReader);
+        jsonRequestResponse = new JsonRequestResponse(socketReader, socketWriter);
+        discardMenuItemController = new DiscardMenuItemController(inputValidations, jsonRequestResponse, consoleReader);
+
     }
 
     private static void handleUserCommands() throws IOException, ParseException {
         while (true) {
             System.out.println("Enter operation to perform\n1. login\n2. showUserLogs\n3. Exit");
-            String command = consoleReader.readLine();
+            int command = inputValidations.getValidatedIntInput();
 
-            if (command.equals("3")) {
+            if (command == 3) {
                 break;
             }
 
             switch (command) {
-                case "1" ->
+                case 1 ->
                     handleLogin();
-                case "2" ->
+                case 2 ->
                     showUserLogs();
                 default ->
                     System.out.println("Invalid command");
@@ -61,23 +68,17 @@ public class Client {
     @SuppressWarnings("unchecked")
     private static void handleLogin() throws IOException, ParseException {
         System.out.println("Enter employee ID: ");
-        employeeId = consoleReader.readLine();
+        employeeId = inputValidations.getValidatedIntInput();
         System.out.println("Enter name: ");
         String name = consoleReader.readLine();
 
         JSONObject requestData = new JSONObject();
         requestData.put("requestType", "login");
-        requestData.put("userId", employeeId);
+        requestData.put("userId", String.valueOf(employeeId));
         requestData.put("name", name);
 
-        sendRequest(requestData);
+        jsonRequestResponse.sendRequest(requestData);
         processLoginResponse();
-    }
-
-    private static void sendRequest(JSONObject requestData) {
-        String request = requestData.toJSONString();
-        socketWriter.println(request);
-        socketWriter.flush();
     }
 
     private static void processLoginResponse() throws IOException, ParseException {
@@ -90,7 +91,7 @@ public class Client {
         if ("success".equals(status)) {
             int roleId = ((Long) responseJson.get("role")).intValue();
             System.out.println("Login successful. Role ID: " + roleId);
-            RoleHandler roleHandler = createRoleHandler(roleId, employeeId);
+            RoleHandler roleHandler = createRoleHandler(roleId, String.valueOf(employeeId));
             roleHandler.handleRoleOperations();
         } else {
             System.out.println("Login failed");
@@ -101,15 +102,15 @@ public class Client {
         switch (roleId) {
             case 1 -> {
                 System.out.println("Admin Login Successfully");
-                return new AdminClientController(socketReader, socketWriter, consoleReader, employeeId);
+                return new AdminClientController(discardMenuItemController, inputValidations, jsonRequestResponse, String.valueOf(employeeId));
             }
             case 2 -> {
                 System.out.println("Chef Login Successfully");
-                return new ChefClient(socketReader, socketWriter, consoleReader, employeeId);
+                return new ChefClient(discardMenuItemController, inputValidations, jsonRequestResponse, String.valueOf(employeeId));
             }
             case 3 -> {
                 System.out.println("Employee Login Successfully");
-                return new EmployeeClient(socketReader, socketWriter, consoleReader, employeeId);
+                return new EmployeeClient(inputValidations, jsonRequestResponse, String.valueOf(employeeId));
             }
             default ->
                 throw new IllegalArgumentException("Unknown role ID: " + roleId);
@@ -120,7 +121,7 @@ public class Client {
     private static void showUserLogs() {
         JSONObject requestData = new JSONObject();
         requestData.put("requestType", "showUserLogs");
-        sendRequest(requestData);
+        jsonRequestResponse.sendRequest(requestData);
 
         System.out.println("Server Response:");
         try {

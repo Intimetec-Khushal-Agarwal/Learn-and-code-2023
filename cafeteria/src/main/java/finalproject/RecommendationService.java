@@ -30,17 +30,15 @@ public class RecommendationService implements ClientRequestHandler {
 
     @Override
     public void handleRequest(JSONObject jsonData, PrintWriter out) throws IOException {
-        System.out.println("Inside handle request");
 
         String action = (String) jsonData.get("requestType");
-        System.out.println("Handling request: " + action);
 
         switch (action) {
             case "viewRecommendations" -> {
                 try {
                     viewRecommendations(out);
                 } catch (SQLException ex) {
-                    ex.printStackTrace(); // Log or handle the exception appropriately
+                    ex.getMessage();
                     out.println("Error fetching recommendations.");
                     out.println("END_OF_RESPONSE");
                     out.flush();
@@ -100,8 +98,8 @@ public class RecommendationService implements ClientRequestHandler {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
-            throw e; // Rethrow SQLException or handle as appropriate for your application
+            e.getMessage();
+            throw e;
         }
 
         // Output recommendations header
@@ -112,17 +110,17 @@ public class RecommendationService implements ClientRequestHandler {
         String bfQuery = "SELECT mi.menu_item_id, mi.name, mt.meal_type, mi.price, mi.rating, mi.sentiments, mi.sentiment_score FROM menu_items mi "
                 + "JOIN menu_types mt ON mi.meal_type_id = mt.meal_type_id "
                 + "WHERE mt.meal_type = 'Breakfast' "
-                + "ORDER BY mi.rating DESC ";
+                + "ORDER BY mi.rating DESC LIMIT 5 ";
 
         String lunchQuery = "SELECT mi.menu_item_id, mi.name, mt.meal_type, mi.price, mi.rating, mi.sentiments,mi.sentiment_score  FROM menu_items mi "
                 + "JOIN menu_types mt ON mi.meal_type_id = mt.meal_type_id "
                 + "WHERE mt.meal_type = 'Lunch' "
-                + "ORDER BY mi.rating DESC ";
+                + "ORDER BY mi.rating DESC LIMIT 5 ";
 
         String dinnerQuery = "SELECT mi.menu_item_id, mi.name, mt.meal_type, mi.price, mi.rating, mi.sentiments,mi.sentiment_score  FROM menu_items mi "
                 + "JOIN menu_types mt ON mi.meal_type_id = mt.meal_type_id "
                 + "WHERE mt.meal_type = 'Dinner' "
-                + "ORDER BY mi.rating DESC ";
+                + "ORDER BY mi.rating DESC LIMIT 5";
 
         // Display top menu items for each meal type
         displayTopMenuItems(bfQuery, out);
@@ -164,12 +162,11 @@ public class RecommendationService implements ClientRequestHandler {
                 String formattedItem = String.format("%-4d| %-25s| %-13s| %-6.2f| %-6.2f| %-26s| %-6.2f",
                         id, name, mealType, price, avgRating, String.join(", ", sentimentWords), sentimentScore);
 
-                System.out.println(formattedItem);
                 out.println(formattedItem);
             }
             out.flush();
         } catch (SQLException e) {
-            e.printStackTrace();
+            e.getMessage();
             out.println("Error fetching menu items.");
         }
     }

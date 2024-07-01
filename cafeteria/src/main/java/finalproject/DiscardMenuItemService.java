@@ -18,9 +18,9 @@ public class DiscardMenuItemService implements ClientRequestHandler {
         this.menuService = new MenuService();
     }
 
-    private static final String SHOW_Eligible_DISCARD_ITEMS_QUERY = "SELECT mi.menu_item_id, mi.name, mi.rating, mi.sentiments, mi.sentiment_score, mt.meal_type AS meal_type_name "
+    private static final String SHOW_ELIGIBLE_DISCARD_ITEMS_QUERY = "SELECT mi.menu_item_id, mi.name, mi.rating, mi.sentiments, mi.sentiment_score, mt.meal_type AS meal_type_name "
             + "FROM menu_items mi JOIN menu_types mt ON mi.meal_type_id = mt.meal_type_id "
-            + "WHERE mi.rating <= 2 AND mi.sentiment_score < 50";
+            + "WHERE mi.rating <= 2 AND mi.sentiment_score <= 50";
 
     private static final String STORE_DISCARD_MENU_QUERY = "INSERT INTO discard_items (menu_item_id, discard_date, message_id) VALUES (?, CURRENT_DATE, ?)";
     private static final String GET_DISCARD_MENU_ITEM_LIST = "SELECT discard_date, menu_item_id, message_id FROM discard_items ORDER BY discard_date DESC";
@@ -49,10 +49,9 @@ public class DiscardMenuItemService implements ClientRequestHandler {
 
     @SuppressWarnings("unchecked")
     private void showDiscardMenuItemList(PrintWriter out) {
-        try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(SHOW_Eligible_DISCARD_ITEMS_QUERY); ResultSet rs = stmt.executeQuery()) {
+        try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(SHOW_ELIGIBLE_DISCARD_ITEMS_QUERY); ResultSet rs = stmt.executeQuery()) {
             JSONObject jsonResponse = new JSONObject();
             if (rs.isBeforeFirst()) {
-                System.out.println("Menu Items:");
                 out.printf("%-15s%-35s%-10s%-15s%-20s%-20s\n", "MenuItemID", "Name", "Rating", "Sentiments", "Sentiment Score", "MealType");
                 out.println("-----------------------------------------------------------------------------------------------");
 
@@ -66,30 +65,25 @@ public class DiscardMenuItemService implements ClientRequestHandler {
 
                     out.printf("%-15d%-35s%-10.2f%-15s%-20.2f%-20s\n", menuItemId, name, rating, sentiments, sentimentScore, mealTypeName);
                 }
-
                 out.println("END_OF_RESPONSE");
-                //out.flush();
                 jsonResponse.put("status", "success");
-                jsonResponse.put("date", getDiscardMenuItemList().toString());
+                jsonResponse.put("date", getDiscardMenuItemList());
 
             } else {
                 jsonResponse.put("status", "fail");
                 out.println("No discarded menu items found.");
                 out.println("END_OF_RESPONSE");
-                //out.flush();
             }
             String jsonData = jsonResponse.toJSONString();
-            System.out.println(jsonData);
             out.println(jsonData + "\n");
             out.flush();
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            e.getMessage();
         }
     }
 
     private void storeDiscardMenuItem(JSONObject request, PrintWriter out) {
-        System.out.println("Inside store discard");
         int menuItemId = ((Long) request.get("id")).intValue();
         int messageId = ((Long) request.get("messageId")).intValue();
 
@@ -103,12 +97,12 @@ public class DiscardMenuItemService implements ClientRequestHandler {
             } else if (rowsInserted > 0 && messageId == 4) {
                 out.println("Item added for feedback response");
             } else {
-                System.out.println("Failed to add discard menu item");
+                out.println("Failed to add discard menu item");
             }
             out.println("END_OF_RESPONSE");
             out.flush();
         } catch (SQLException e) {
-            e.printStackTrace();
+            e.getMessage();
         }
     }
 
@@ -118,10 +112,11 @@ public class DiscardMenuItemService implements ClientRequestHandler {
 
             if (rs.next()) {
                 currentDate = rs.getDate("discard_date");
+                return currentDate;
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            e.getMessage();
         }
 
         return currentDate;
@@ -133,8 +128,7 @@ public class DiscardMenuItemService implements ClientRequestHandler {
 
             JSONObject jsonResponse = new JSONObject();
             if (rs.isBeforeFirst()) {
-                System.out.println("Menu Items:");
-                out.printf("%-15s%-25s%-18s%-70s\n", "MenuItemID", "Name", "discard_date", "message");
+                out.printf("%-15s%-20s%-18s%-70s\n", "MenuItemID", "Name", "discard_date", "message");
                 out.println("-----------------------------------------------------------------------------------------------");
 
                 while (rs.next()) {
@@ -149,19 +143,19 @@ public class DiscardMenuItemService implements ClientRequestHandler {
                         text = "Answer the below question";
                     }
 
-                    out.printf("%-15s%-25s%-18s%-70s\n", menuItemId, name, date, text);
-                    out.println("END_OF_RESPONSE");
+                    out.printf("%-15s%-20s%-18s%-70s\n", menuItemId, name, date, text);
                     jsonResponse.put("status", "success");
                     jsonResponse.put("message", message);
                 }
             } else {
                 jsonResponse.put("status", "fail");
             }
-            String response = jsonResponse.toJSONString();
-            out.println(response + "\n");
+
+            out.println("END_OF_RESPONSE");
+            out.println(jsonResponse.toJSONString());
             out.flush();
         } catch (SQLException e) {
-            e.printStackTrace();
+            e.getMessage();
         }
     }
 }

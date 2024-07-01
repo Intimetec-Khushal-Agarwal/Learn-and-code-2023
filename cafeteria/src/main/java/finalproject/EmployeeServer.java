@@ -26,7 +26,6 @@ public class EmployeeServer implements ClientRequestHandler {
     @Override
     public void handleRequest(JSONObject jsonData, PrintWriter out) throws IOException {
         String action = (String) jsonData.get("requestType");
-        System.out.println("Handling request: " + action);
 
         switch (action) {
             case "showRollOutMenuItems" ->
@@ -100,7 +99,7 @@ public class EmployeeServer implements ClientRequestHandler {
         Date voteDate = new Date(System.currentTimeMillis());
         try (PreparedStatement stmt = conn.prepareStatement(STORE_SELECTED_ITEMS_SQL)) {
             stmt.setInt(1, itemId);
-            stmt.setDate(2,voteDate);
+            stmt.setDate(2, voteDate);
             stmt.executeUpdate();
 
         } catch (SQLException e) {

@@ -1,8 +1,6 @@
 package finalproject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,23 +9,24 @@ import org.json.simple.JSONObject;
 
 public class AdminClientController implements RoleHandler {
 
-
-    private final BufferedReader socketReader;
-    private final PrintWriter socketWriter;
-    private final BufferedReader consoleReader;
     private final List<String> operations;
     private final String employeeId;
     LocalDateTime loginTime;
     private final DiscardMenuItemController discardMenuItemController;
+    private final UpdateProfile updateProfile;
+    private final JsonRequestResponse jsonRequestResponse;
+    private final InputValidations inputValidations;
+    private final JSONObject menuItem;
 
-    public AdminClientController(BufferedReader socketReader, PrintWriter socketWriter, BufferedReader consoleReader, String employeeId) {
-        this.socketReader = socketReader;
-        this.socketWriter = socketWriter;
-        this.consoleReader = consoleReader;
+    public AdminClientController(DiscardMenuItemController discardMenuItemController, InputValidations inputValidations, JsonRequestResponse jsonRequestResponse, String employeeId) {
         this.employeeId = employeeId;
         this.operations = new ArrayList<>();
         this.loginTime = LocalDateTime.now();
-        this.discardMenuItemController = new DiscardMenuItemController(this.consoleReader, this.socketWriter, this.socketReader);
+        this.discardMenuItemController = discardMenuItemController;
+        this.updateProfile = new UpdateProfile(inputValidations, jsonRequestResponse, employeeId);
+        this.jsonRequestResponse = jsonRequestResponse;
+        this.inputValidations = inputValidations;
+        this.menuItem = new JSONObject();
     }
 
     @SuppressWarnings("unchecked")
@@ -36,41 +35,37 @@ public class AdminClientController implements RoleHandler {
         try {
             while (true) {
                 System.out.println("Enter operation to perform:\n1.showMenu\n2.addMenuItem\n3.updateMenuItem\n4.deleteMenuItem\n5.discardMenuItem\n6.exit ");
-                String command = consoleReader.readLine();
-                if (command.equalsIgnoreCase("6")) {
+                int command = inputValidations.getValidatedIntInput();
+                if (command == 6) {
 
-                    JSONObject userActivity = new JSONObject();
-                    userActivity.put("requestType", "userLogs");
-                    userActivity.put("userId", this.employeeId);
-                    userActivity.put("operations", operations);
-                    userActivity.put("loginTime", loginTime.toString());
-                    String sendRequest = userActivity.toJSONString();
-                    socketWriter.println(sendRequest + "\n");
+                    menuItem.put("requestType", "userLogs");
+                    menuItem.put("userId", this.employeeId);
+                    menuItem.put("operations", operations);
+                    menuItem.put("loginTime", loginTime.toString());
+                    jsonRequestResponse.sendRequest(menuItem);
                     System.out.println("Admin logged out successfully");
                     break;
                 }
 
-                JSONObject menuItem = new JSONObject();
-
                 switch (command) {
-                    case "1" -> {
+                    case 1 -> {
                         operations.add("showMenu");
                         menuItem.put("requestType", "showMenu");
                         displayMenu(menuItem);
                     }
-                    case "2" -> {
+                    case 2 -> {
                         operations.add("addMenu");
                         addMenuItem(menuItem);
                     }
-                    case "3" -> {
+                    case 3 -> {
                         operations.add("updateMenu");
                         updateMenuItem(menuItem);
                     }
-                    case "4" -> {
+                    case 4 -> {
                         operations.add("deleteMenu");
                         deleteMenuItem(menuItem);
                     }
-                    case "5" -> {
+                    case 5 -> {
                         operations.add("discardMenuItem");
                         discardMenuItemController.discardMenuItems();
                     }
@@ -88,15 +83,19 @@ public class AdminClientController implements RoleHandler {
     @SuppressWarnings("unchecked")
     private void addMenuItem(JSONObject menuItem) throws IOException {
         System.out.println("Enter item name: ");
-        String itemName = consoleReader.readLine();
+        String itemName = inputValidations.getValidatedStringInput();
         System.out.println("Enter item price: ");
-        float itemPrice = getValidatedFloatInput();
-        System.out.println("Enter item Rating: ");
-        int rating = getValidatedRating();
-        System.out.println("Enter item availability status: ");
-        String itemStatus = consoleReader.readLine();
+        float itemPrice = inputValidations.getValidatedFloatInput();
+        System.out.println("Enter item Rating(1-5): ");
+        int rating = inputValidations.getValidatedOption(5);
+        System.out.println("Enter item availability status (yes/no): ");
+        String itemStatus = inputValidations.getValidatedBooleanInput();
         System.out.println("Enter meal type (1. Breakfast, 2. Lunch, 3. Dinner): ");
-        int mealType = getValidatedIntInput();
+        int mealType = inputValidations.getValidatedOption(3);
+        int dietaryPreference = updateProfile.getDietaryPreference();
+        int spiceLevel = updateProfile.getSpiceLevel();
+        int foodPreference = updateProfile.getFoodPreference();
+        int sweetTooth = updateProfile.getSweetTooth();
 
         menuItem.put("requestType", "addMenuItem");
         menuItem.put("name", itemName);
@@ -104,6 +103,10 @@ public class AdminClientController implements RoleHandler {
         menuItem.put("status", itemStatus);
         menuItem.put("rating", rating);
         menuItem.put("mealType", mealType);
+        menuItem.put("foodType", dietaryPreference);
+        menuItem.put("foodTaste", spiceLevel);
+        menuItem.put("foodPreference", foodPreference);
+        menuItem.put("sweetTooth", sweetTooth);
 
         displayMenu(menuItem);
     }
@@ -111,11 +114,11 @@ public class AdminClientController implements RoleHandler {
     @SuppressWarnings("unchecked")
     private void updateMenuItem(JSONObject menuItem) throws IOException {
         System.out.println("Enter item id: ");
-        int itemId = getValidatedIntInput();
+        int itemId = inputValidations.getValidatedIntInput();
         System.out.println("Enter item price: ");
-        float itemPrice = getValidatedFloatInput();
-        System.out.println("Enter item availability status: ");
-        String itemStatus = consoleReader.readLine();
+        float itemPrice = inputValidations.getValidatedFloatInput();
+        System.out.println("Enter item availability status(yes/no): ");
+        String itemStatus = inputValidations.getValidatedBooleanInput();
 
         menuItem.put("requestType", "updateMenuItem");
         menuItem.put("id", itemId);
@@ -129,7 +132,7 @@ public class AdminClientController implements RoleHandler {
     @SuppressWarnings("unchecked")
     private void deleteMenuItem(JSONObject menuItem) throws IOException {
         System.out.println("Enter item ID to delete: ");
-        int itemId = getValidatedIntInput();
+        int itemId = inputValidations.getValidatedIntInput();
         menuItem.put("requestType", "deleteMenuItem");
         menuItem.put("id", itemId);
 
@@ -137,62 +140,9 @@ public class AdminClientController implements RoleHandler {
 
     }
 
-    private void sendRequest(JSONObject menuItem) {
-        System.out.println("Sending Request");
-        String request = menuItem.toJSONString();
-        socketWriter.println(request + "\n");
-        socketWriter.flush();
-    }
-
-    private void readResponse() throws IOException {
-        String serverResponse;
-        System.out.println("server Response: ");
-        while ((serverResponse = socketReader.readLine()) != null) {
-            if (serverResponse.equals("END_OF_RESPONSE")) {
-                break;
-            }
-            System.out.println(serverResponse);
-        }
-    }
-
     private void displayMenu(JSONObject menuItem) throws IOException {
         System.out.println("inside display menu");
-        sendRequest(menuItem);
-        readResponse();
-    }
-
-    private int getValidatedIntInput() throws IOException {
-        while (true) {
-            try {
-                return Integer.parseInt(consoleReader.readLine());
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid input, please enter a valid number:");
-            }
-        }
-    }
-
-    private float getValidatedFloatInput() throws IOException {
-        while (true) {
-            try {
-                return Float.parseFloat(consoleReader.readLine());
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid input, please enter a valid number:");
-            }
-        }
-    }
-
-    private int getValidatedRating() throws IOException {
-        while (true) {
-            try {
-                int rating = Integer.parseInt(consoleReader.readLine());
-                if (rating >= 1 && rating <= 5) {
-                    return rating;
-                } else {
-                    System.out.println("Enter the rating in range 1-5:");
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid input, please enter a number between 1 and 5:");
-            }
-        }
+        jsonRequestResponse.sendRequest(menuItem);
+        jsonRequestResponse.readResponse();
     }
 }

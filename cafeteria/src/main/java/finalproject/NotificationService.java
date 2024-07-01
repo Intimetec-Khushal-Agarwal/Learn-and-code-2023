@@ -23,7 +23,6 @@ public class NotificationService implements ClientRequestHandler {
     @Override
     public void handleRequest(JSONObject jsonData, PrintWriter out) throws IOException {
         String action = (String) jsonData.get("requestType");
-        System.out.println("Handling request: " + action);
 
         switch (action) {
             case "viewNotification" ->

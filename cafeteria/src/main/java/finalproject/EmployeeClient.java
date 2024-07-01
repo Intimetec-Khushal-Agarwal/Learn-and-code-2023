@@ -1,8 +1,6 @@
 package finalproject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,21 +14,23 @@ import org.json.simple.parser.ParseException;
 public class EmployeeClient implements RoleHandler {
 
     private final String employeeId;
-    private final BufferedReader socketReader;
-    private final PrintWriter socketWriter;
-    private final BufferedReader consoleReader;
     private final List<String> operations;
     private final UpdateProfile updateProfile;
     LocalDateTime loginTime;
+    private final JsonRequestResponse jsonRequestResponse;
+    private final InputValidations inputValidations;
+    JSONObject jsonRequest;
 
-    public EmployeeClient(BufferedReader socketReader, PrintWriter socketWriter, BufferedReader consoleReader, String employeeId) {
-        this.socketReader = socketReader;
-        this.socketWriter = socketWriter;
-        this.consoleReader = consoleReader;
+    public EmployeeClient(InputValidations inputValidations, JsonRequestResponse jsonRequestResponse, String employeeId) {
         this.employeeId = employeeId;
         this.operations = new ArrayList<>();
         this.loginTime = LocalDateTime.now();
-        this.updateProfile = new UpdateProfile(socketReader, socketWriter, consoleReader, employeeId);
+        this.updateProfile = new UpdateProfile(inputValidations, jsonRequestResponse, employeeId);
+        this.jsonRequestResponse = jsonRequestResponse;
+        this.inputValidations = inputValidations;
+
+        this.jsonRequest = new JSONObject();
+
     }
 
     @SuppressWarnings("unchecked")
@@ -39,39 +39,37 @@ public class EmployeeClient implements RoleHandler {
         try {
             while (true) {
                 System.out.println("Enter command\n1. Select Menu Item\n2. Give Feedback \n3. View Notification\n4. View Discard Menu Item\n5. Update Profile \n6. Exit ");
-                String command = consoleReader.readLine();
+                int command = inputValidations.getValidatedIntInput();
 
-                if ("6".equals(command)) {
-                    JSONObject userActivity = new JSONObject();
-                    userActivity.put("requestType", "userLogs");
-                    userActivity.put("userId", this.employeeId);
-                    userActivity.put("operations", operations);
-                    userActivity.put("loginTime", loginTime.toString());
-                    String sendRequest = userActivity.toJSONString();
-                    socketWriter.println(sendRequest + "\n");
+                if (command == 6) {
+                    jsonRequest.put("requestType", "userLogs");
+                    jsonRequest.put("userId", this.employeeId);
+                    jsonRequest.put("operations", operations);
+                    jsonRequest.put("loginTime", loginTime.toString());
+                    jsonRequestResponse.sendRequest(jsonRequest);
                     System.out.println("Employee logged out successfully");
                     break;
                 }
 
                 switch (command) {
-                    case "1" -> {
+                    case 1 -> {
                         operations.add("SelectMenuItem");
                         handleSelectMenuItem();
                     }
-                    case "2" -> {
+                    case 2 -> {
                         operations.add("GiveFeedback");
                         handleGiveFeedback();
                     }
-                    case "3" -> {
+                    case 3 -> {
                         operations.add("ViewNotification");
                         viewNotification();
                     }
-                    case "4" -> {
+                    case 4 -> {
                         operations.add("showDiscardMenuItems");
                         showDiscardMenuItems();
                     }
 
-                    case "5" -> {
+                    case 5 -> {
                         operations.add("updateUserProfile");
                         updateProfile.updateUserProfile();
                     }
@@ -92,14 +90,18 @@ public class EmployeeClient implements RoleHandler {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private boolean hasUserVoted() throws IOException, ParseException {
-        String checkVoteJson = createRequest("checkUserVote", Map.of("userId", this.employeeId));
-        sendRequest(checkVoteJson);
+        jsonRequest.put("requestType", "checkUserVote");
+        jsonRequest.put("userId", this.employeeId);
 
-        String response = readResponse();
+        jsonRequestResponse.sendRequest(jsonRequest);
+
+        String response = jsonRequestResponse.readResponseUntilEnd();
         return Boolean.parseBoolean(response.trim());
     }
 
+    @SuppressWarnings("unchecked")
     private void requestMenuFromServer() throws IOException {
         System.out.println("Requesting menu from server...");
         String[] mealTypes = {"breakfast", "lunch", "dinner"};
@@ -109,181 +111,106 @@ public class EmployeeClient implements RoleHandler {
             requestMenuForMealType(mealSelections, mealTypes[i], i + 1);
         }
 
-        String request = createRequest("processSelectedItems", Map.of(
-                "selectedItems", mealSelections,
-                "userId", this.employeeId
-        ));
-        sendRequest(request);
-        printResponse();
+        jsonRequest.put("requestType", "processSelectedItems");
+        jsonRequest.put("userId", this.employeeId);
+        jsonRequest.put("selectedItems", mealSelections);
+        jsonRequestResponse.sendRequest(jsonRequest);
+        jsonRequestResponse.readResponse();
     }
 
+    @SuppressWarnings("unchecked")
     private void requestMenuForMealType(Map<String, List<String>> mealSelections, String mealType, int mealTypeId) throws IOException {
-        String request = createRequest("showRollOutMenuItems", Map.of("mealType", mealTypeId));
-        sendRequest(request);
+        jsonRequest.put("requestType", "showRollOutMenuItems");
+        jsonRequest.put("mealType", mealTypeId);
+        jsonRequestResponse.sendRequest(jsonRequest);
 
         System.out.println("Menu for " + mealType + ":");
-        String response = readResponse();
-        System.out.println(response);
+        jsonRequestResponse.readResponse();
 
         List<String> itemIds = new ArrayList<>();
         System.out.println("Select items for " + mealType + ":");
-        String itemId = consoleReader.readLine();
-        if (isValidItemId(itemId)) {
-            itemIds.add(itemId);
-            mealSelections.put(mealType, itemIds);
-        } else {
-            System.out.println("Invalid item ID. Please try again.");
-        }
+        int itemId = inputValidations.getValidatedIntInput();
+
+        itemIds.add(String.valueOf(itemId));
+        mealSelections.put(mealType, itemIds);
     }
 
     private void handleGiveFeedback() throws IOException, ParseException {
         requestAndPrintMenu();
 
         System.out.println("Enter item ID: ");
-        String itemId = consoleReader.readLine();
+        int itemId = inputValidations.getValidatedIntInput();
 
-        if (isValidItemId(itemId)) {
-            if (checkIfUserAlreadyReviewed(itemId)) {
-                System.out.println("User already submitted feedback");
-            } else {
-                collectAndSendFeedback(itemId);
-            }
+        if (checkIfUserAlreadyReviewed(String.valueOf(itemId))) {
+            System.out.println("User already submitted feedback");
         } else {
-            System.out.println("Invalid item ID. Please try again.");
+            collectAndSendFeedback(String.valueOf(itemId));
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void requestAndPrintMenu() throws IOException {
-        String request = createRequest("showMenu", null);
-        sendRequest(request);
-        printResponse();
+        jsonRequest.put("requestType", "showMenu");
+
+        jsonRequestResponse.sendRequest(jsonRequest);
+        jsonRequestResponse.readResponse();
     }
 
+    @SuppressWarnings("unchecked")
     private boolean checkIfUserAlreadyReviewed(String itemId) throws IOException {
-        String request = createRequest("checkExistingFeedback", Map.of(
-                "userId", this.employeeId,
-                "itemId", itemId
-        ));
-        sendRequest(request);
+        jsonRequest.put("requestType", "checkExistingFeedback");
+        jsonRequest.put("userId", this.employeeId);
+        jsonRequest.put("itemId", itemId);
 
-        String response = readResponse();
+        jsonRequestResponse.sendRequest(jsonRequest);
+
+        String response = jsonRequestResponse.readResponseUntilEnd();
         return Boolean.parseBoolean(response.trim());
     }
 
+    @SuppressWarnings("unchecked")
     private void collectAndSendFeedback(String itemId) throws IOException {
         System.out.println("Enter comment: ");
-        String comment = consoleReader.readLine();
+        String comment = inputValidations.getValidatedStringInput();
         System.out.println("Enter rating (1-5): ");
-        String rating = consoleReader.readLine();
+        int rating = inputValidations.getValidatedOption(5);
 
-        if (isValidRating(rating)) {
-            String request = createRequest("giveFeedback", Map.of(
-                    "itemId", itemId,
-                    "userId", this.employeeId,
-                    "comment", comment,
-                    "rating", rating
-            ));
-            sendRequest(request);
-            printResponse();
-        } else {
-            System.out.println("Invalid rating. Please enter a number between 1 and 5.");
-        }
-    }
+        jsonRequest.put("requestType", "giveFeedback");
+        jsonRequest.put("userId", this.employeeId);
+        jsonRequest.put("itemId", itemId);
+        jsonRequest.put("comment", comment);
+        jsonRequest.put("rating", String.valueOf(rating));
 
-    private void viewNotification() {
-        String request = createRequest("viewNotification", null);
-        sendRequest(request);
-        printResponse();
+        jsonRequestResponse.sendRequest(jsonRequest);
+        jsonRequestResponse.readResponse();
     }
 
     @SuppressWarnings("unchecked")
-    private String createRequest(String requestType, Map<String, Object> parameters) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("requestType", requestType);
-        if (parameters != null) {
-            for (Map.Entry<String, Object> entry : parameters.entrySet()) {
-                jsonObject.put(entry.getKey(), entry.getValue());
-            }
-        }
-        return jsonObject.toJSONString();
+    private void viewNotification() throws IOException {
+        jsonRequest.put("requestType", "viewNotification");
+        jsonRequestResponse.sendRequest(jsonRequest);
+        jsonRequestResponse.readResponse();
     }
 
-    private void sendRequest(String request) {
-        socketWriter.println(request + "\n");
-        socketWriter.flush();
-    }
-
-    private String readResponse() {
-        StringBuilder responseBuilder = new StringBuilder();
-        String responseLine;
-        try {
-            while ((responseLine = socketReader.readLine()) != null) {
-                if ("END_OF_RESPONSE".equals(responseLine)) {
-                    break;
-                }
-                responseBuilder.append(responseLine).append("\n");
-            }
-        } catch (IOException e) {
-            System.err.println("Error reading response: " + e.getMessage());
-        }
-        return responseBuilder.toString();
-    }
-
-    private void printResponse() {
-        String response = readResponse();
-        System.out.println(response);
-    }
-
-    private boolean isValidItemId(String itemId) {
-        try {
-            Integer.valueOf(itemId);
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
-        }
-    }
-
-    private boolean isValidRating(String rating) {
-        try {
-            int rate = Integer.parseInt(rating);
-            return rate >= 1 && rate <= 5;
-        } catch (NumberFormatException e) {
-            return false;
-        }
-    }
-
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "null"})
     private void showDiscardMenuItems() throws IOException, ParseException {
-        JSONObject jsonResponse = new JSONObject();
-        jsonResponse.put("requestType", "showDiscardMenuItems");
-        String request = jsonResponse.toJSONString();
-        sendRequest(request);
+        jsonRequest.put("requestType", "showDiscardMenuItems");
+        jsonRequestResponse.sendRequest(jsonRequest);
+        System.out.println("Request send successfully");
+        jsonRequestResponse.readResponse();
+        System.out.println("Response read");
 
-        String serverResponse;
-        System.out.println("server Response: ");
-
-        while ((serverResponse = socketReader.readLine()) != null) {
-            if (serverResponse.equals("END_OF_RESPONSE")) {
-                System.out.println("Inside end of response");
-                break;
-            }
-            System.out.println("Inside while");
-            System.out.println(serverResponse);
-        }
-        System.out.println("outside while");
-
-        String response;
-        response = socketReader.readLine();
+        String response = jsonRequestResponse.readJSONresponse();
         System.out.println("Response: " + response);
 
-        if (response != null || !response.isEmpty() || response.isBlank()) {
+        if (response != null || response.isBlank()) {
             JSONParser parser = new JSONParser();
-            JSONObject responseJson = null;
+            JSONObject responseJson;
             responseJson = (JSONObject) parser.parse(response);
             String status = (String) responseJson.get("status");
 
             if ("false".equals(status)) {
-                System.out.println("Currently no item has been discarded");
+                System.out.println("Currently no item has been added discard list ");
             } else if ("success".equals(status)) {
                 String message = (String) responseJson.get("message");
                 String[] parts = message.split("\\?");
@@ -291,9 +218,9 @@ public class EmployeeClient implements RoleHandler {
                     System.out.println("Provide the feedback for below questions\n\n");
                     for (String question : parts) {
                         System.out.println(question);
-                        String answer = consoleReader.readLine();
+                        inputValidations.getValidatedStringInput();
                     }
-                    System.out.println("Feedback submitted successfully");
+                    System.out.println("Thank you for submitting feedback");
                 }
             }
         }

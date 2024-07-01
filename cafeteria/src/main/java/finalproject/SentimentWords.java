@@ -41,12 +41,10 @@ public class SentimentWords {
             "top-notch", "wow"));
 
     public static Map<Double, Set<String>> sentiments(String feedback) {
-        System.out.println("feedback " + feedback);
         Map<Double, Set<String>> mapping = new HashMap<>();
 
         // Split feedback into words
         String[] words = feedback.toLowerCase().split("\\s+");
-        System.out.println("words " + Arrays.toString(words));
 
         // Count occurrences in each sentiment category
         int a1Count = countWordsInSet(words, a1);
@@ -54,12 +52,6 @@ public class SentimentWords {
         int a3Count = countWordsInSet(words, a3);
         int a4Count = countWordsInSet(words, a4);
         int a5Count = countWordsInSet(words, a5);
-
-        System.out.println("a1Count " + a1Count);
-        System.out.println("a2Count " + a2Count);
-        System.out.println("a3Count " + a3Count);
-        System.out.println("a4Count " + a4Count);
-        System.out.println("a5Count " + a5Count);
 
         // Determine sentiment score based on counts
         int score;
@@ -74,10 +66,9 @@ public class SentimentWords {
         } else if (a5Count > a1Count && a5Count > a2Count && a5Count > a3Count && a5Count > a4Count) {
             score = 5;
         } else {
-            score = 3; // Default to neutral if there's no clear sentiment
+            score = 3;
         }
 
-        // Extract sentiment words for the determined score
         double finalScore = convertScoreToPercent(score);
         Set<String> sentimentWords = extractSentimentWords(words, score);
         mapping.put(finalScore, sentimentWords);
@@ -93,34 +84,28 @@ public class SentimentWords {
         Set<String> sentimentWords = new HashSet<>();
 
         switch (score) {
-            case 1:
+            case 1 ->
                 sentimentWords.addAll(Arrays.stream(words)
                         .filter(a1::contains)
                         .collect(Collectors.toSet()));
-                break;
-            case 2:
+            case 2 ->
                 sentimentWords.addAll(Arrays.stream(words)
                         .filter(a2::contains)
                         .collect(Collectors.toSet()));
-                break;
-            case 3:
+            case 3 ->
                 sentimentWords.addAll(Arrays.stream(words)
                         .filter(a3::contains)
                         .collect(Collectors.toSet()));
-                break;
-            case 4:
+            case 4 ->
                 sentimentWords.addAll(Arrays.stream(words)
                         .filter(a4::contains)
                         .collect(Collectors.toSet()));
-                break;
-            case 5:
+            case 5 ->
                 sentimentWords.addAll(Arrays.stream(words)
                         .filter(a5::contains)
                         .collect(Collectors.toSet()));
-                break;
-            default:
-                // Default to an empty set if no sentiment words found
-                break;
+            default -> {
+            }
         }
         if (sentimentWords.isEmpty()) {
             Set<String> defaultValue = new HashSet<>();
@@ -132,19 +117,19 @@ public class SentimentWords {
     }
 
     public static double convertScoreToPercent(int score) {
-        switch (score) {
-            case 1:
-                return 0.0;
-            case 2:
-                return 25.0;
-            case 3:
-                return 50.0;
-            case 4:
-                return 75.0;
-            case 5:
-                return 100.0;
-            default:
-                return 50.0; // Default to 50% for neutral or unknown scores
-        }
+        return switch (score) {
+            case 1 ->
+                0.0;
+            case 2 ->
+                25.0;
+            case 3 ->
+                50.0;
+            case 4 ->
+                75.0;
+            case 5 ->
+                100.0;
+            default ->
+                50.0;
+        };
     }
 }

@@ -53,7 +53,6 @@ public class ClientHandler implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("Inside run");
         try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
             handleClientRequests(in, out);
         } catch (IOException ex) {

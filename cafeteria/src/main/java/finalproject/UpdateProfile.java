@@ -1,25 +1,20 @@
 package finalproject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.PrintWriter;
 
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 public class UpdateProfile {
 
-    private final PrintWriter socketWriter;
-    private final BufferedReader consoleReader;
-    private final BufferedReader socketReader;
     private final String employeeId;
+    private final InputValidations inputValidations;
+    private final JsonRequestResponse jsonRequestResponse;
 
-    public UpdateProfile(BufferedReader socketReader, PrintWriter socketWriter, BufferedReader consoleReader, String employeeId) {
-        this.socketWriter = socketWriter;
-        this.socketReader = socketReader;
-        this.consoleReader = consoleReader;
+    public UpdateProfile(InputValidations inputValidations, JsonRequestResponse jsonRequestResponse, String employeeId) {
         this.employeeId = employeeId;
+        this.inputValidations = inputValidations;
+        this.jsonRequestResponse = jsonRequestResponse;
     }
 
     @SuppressWarnings("unchecked")
@@ -38,75 +33,42 @@ public class UpdateProfile {
         jsonRequest.put("sweetTooth", sweetTooth);
         jsonRequest.put("userId", employeeId);
 
-        sendRequest(jsonRequest);
-        readResponse();
+        jsonRequestResponse.sendRequest(jsonRequest);
+        jsonRequestResponse.readJSONresponse();
     }
 
-    private int getDietaryPreference() throws IOException {
+    public int getDietaryPreference() throws IOException {
         System.out.println("1) Please select one:");
         System.out.println("1. Vegetarian");
         System.out.println("2. Non Vegetarian");
         System.out.println("3. Eggetarian");
-        return getValidatedOption(3);
+        return inputValidations.getValidatedOption(3);
     }
 
-    private int getSpiceLevel() throws IOException {
-        System.out.println("2) Please select your spice level:");
+    public int getSpiceLevel() throws IOException {
+        System.out.println("2) Spice level:");
         System.out.println("1. High");
         System.out.println("2. Medium");
         System.out.println("3. Low");
-        return getValidatedOption(3);
+        return inputValidations.getValidatedOption(3);
     }
 
-    private int getFoodPreference() throws IOException {
-        System.out.println("3) What do you prefer most?");
+    public int getFoodPreference() throws IOException {
+        System.out.println("3) Food Preference?");
         System.out.println("1. North Indian");
         System.out.println("2. South Indian");
         System.out.println("3. Other");
-        return getValidatedOption(3);
+        return inputValidations.getValidatedOption(3);
     }
 
-    private int getSweetTooth() throws IOException {
-        System.out.println("4) Do you have a sweet tooth?");
+    public int getSweetTooth() throws IOException {
+        System.out.println("4) Sweet tooth?");
         System.out.println("1. Yes");
         System.out.println("2. No");
-        int option = getValidatedOption(2);
+        int option = inputValidations.getValidatedOption(2);
         if (option == 2) {
             return 0;
         }
         return option;
     }
-
-    private int getValidatedOption(int maxOption) throws IOException {
-        int option;
-        while (true) {
-            try {
-                option = Integer.parseInt(consoleReader.readLine());
-                if (option >= 1 && option <= maxOption) {
-                    break;
-                } else {
-                    System.out.println("Invalid option. Please select a number between 1 and " + maxOption + ".");
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid input. Please enter a valid number.");
-            }
-        }
-        return option;
-    }
-
-    private void sendRequest(JSONObject jsonRequest) {
-        String request = jsonRequest.toJSONString();
-        socketWriter.println(request + "\n");
-        socketWriter.flush();
-    }
-
-    private void readResponse() throws IOException, ParseException {
-        String serverResponse = socketReader.readLine();
-        System.out.println("Server response " + serverResponse);
-
-        JSONObject responseJson = (JSONObject) new JSONParser().parse(serverResponse);
-        String message = (String) responseJson.get("message");
-        System.out.println(message);
-    }
-
 }
