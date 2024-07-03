@@ -1,7 +1,6 @@
-package finalproject;
+package client;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,68 +10,55 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-public class EmployeeClient implements RoleHandler {
+public class EmployeeClientController implements RoleHandler {
+
+    private static final int SELECT_MENU_ITEM = 1;
+    private static final int GIVE_FEEDBACK = 2;
+    private static final int VIEW_NOTIFICATION = 3;
+    private static final int VIEW_DISCARD_MENU_ITEM = 4;
+    private static final int UPDATE_PROFILE = 5;
+    private static final int EXIT = 6;
 
     private final String employeeId;
     private final List<String> operations;
-    private final UpdateProfile updateProfile;
-    LocalDateTime loginTime;
-    private final JsonRequestResponse jsonRequestResponse;
-    private final InputValidations inputValidations;
-    JSONObject jsonRequest;
+    private final UpdateUserProfile updateProfile;
+    private final ServerRequestResponse jsonRequestResponse;
+    private final ConsoleInputValidations inputValidations;
+    private final JSONObject jsonRequest;
 
-    public EmployeeClient(InputValidations inputValidations, JsonRequestResponse jsonRequestResponse, String employeeId) {
+    public EmployeeClientController(ConsoleInputValidations inputValidations, ServerRequestResponse jsonRequestResponse, String employeeId) {
         this.employeeId = employeeId;
         this.operations = new ArrayList<>();
-        this.loginTime = LocalDateTime.now();
-        this.updateProfile = new UpdateProfile(inputValidations, jsonRequestResponse, employeeId);
+        this.updateProfile = new UpdateUserProfile(inputValidations, jsonRequestResponse, employeeId);
         this.jsonRequestResponse = jsonRequestResponse;
         this.inputValidations = inputValidations;
-
         this.jsonRequest = new JSONObject();
-
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void handleRoleOperations() {
         try {
             while (true) {
-                System.out.println("Enter command\n1. Select Menu Item\n2. Give Feedback \n3. View Notification\n4. View Discard Menu Item\n5. Update Profile \n6. Exit ");
+                displayMenu();
                 int command = inputValidations.getValidatedIntInput();
 
-                if (command == 6) {
-                    jsonRequest.put("requestType", "userLogs");
-                    jsonRequest.put("userId", this.employeeId);
-                    jsonRequest.put("operations", operations);
-                    jsonRequest.put("loginTime", loginTime.toString());
-                    jsonRequestResponse.sendRequest(jsonRequest);
-                    System.out.println("Employee logged out successfully");
+                if (command == EXIT) {
+                    jsonRequestResponse.userLogs(employeeId, operations);
+                    jsonRequestResponse.readResponse();
                     break;
                 }
 
                 switch (command) {
-                    case 1 -> {
-                        operations.add("SelectMenuItem");
+                    case SELECT_MENU_ITEM ->
                         handleSelectMenuItem();
-                    }
-                    case 2 -> {
-                        operations.add("GiveFeedback");
+                    case GIVE_FEEDBACK ->
                         handleGiveFeedback();
-                    }
-                    case 3 -> {
-                        operations.add("ViewNotification");
+                    case VIEW_NOTIFICATION ->
                         viewNotification();
-                    }
-                    case 4 -> {
-                        operations.add("showDiscardMenuItems");
+                    case VIEW_DISCARD_MENU_ITEM ->
                         showDiscardMenuItems();
-                    }
-
-                    case 5 -> {
-                        operations.add("updateUserProfile");
+                    case UPDATE_PROFILE ->
                         updateProfile.updateUserProfile();
-                    }
                     default ->
                         System.out.println("Invalid command");
                 }
@@ -80,6 +66,10 @@ public class EmployeeClient implements RoleHandler {
         } catch (IOException | ParseException e) {
             System.err.println("Error in employee client: " + e.getMessage());
         }
+    }
+
+    private void displayMenu() {
+        System.out.println("Enter command\n1. Select Menu Item\n2. Give Feedback \n3. View Notification\n4. View Discard Menu Item\n5. Update Profile \n6. Exit ");
     }
 
     private void handleSelectMenuItem() throws IOException, ParseException {
@@ -101,38 +91,56 @@ public class EmployeeClient implements RoleHandler {
         return Boolean.parseBoolean(response.trim());
     }
 
-    @SuppressWarnings("unchecked")
     private void requestMenuFromServer() throws IOException {
         System.out.println("Requesting menu from server...");
         String[] mealTypes = {"breakfast", "lunch", "dinner"};
         Map<String, List<String>> mealSelections = new HashMap<>();
+        boolean result = false;
 
         for (int i = 0; i < mealTypes.length; i++) {
-            requestMenuForMealType(mealSelections, mealTypes[i], i + 1);
+            result = requestMenuForMealType(mealSelections, mealTypes[i], i + 1);
+        }
+        if (result) {
+            processSelectedItems(mealSelections);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean requestMenuForMealType(Map<String, List<String>> mealSelections, String mealType, int mealTypeId) throws IOException {
+        jsonRequest.put("requestType", "showRollOutMenuItems");
+        jsonRequest.put("mealType", mealTypeId);
+        jsonRequest.put("userId", this.employeeId);
+        jsonRequestResponse.sendRequest(jsonRequest);
+
+        String response = jsonRequestResponse.readResponseUntilEnd();
+        if (response.contains("Currently menu item list is not prepared")) {
+            System.out.println(response + " " + mealType);
+            return false;
+        } else {
+            System.out.println("Menu for " + mealType);
+            System.out.println(response);
         }
 
+        List<String> itemIds = getSelectedItemIds(mealType);
+        mealSelections.put(mealType, itemIds);
+        return true;
+    }
+
+    private List<String> getSelectedItemIds(String mealType) throws IOException {
+        List<String> itemIds = new ArrayList<>();
+        System.out.println("Select items for " + mealType + ":");
+        int itemId = inputValidations.getValidatedIntInput();
+        itemIds.add(String.valueOf(itemId));
+        return itemIds;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void processSelectedItems(Map<String, List<String>> mealSelections) throws IOException {
         jsonRequest.put("requestType", "processSelectedItems");
         jsonRequest.put("userId", this.employeeId);
         jsonRequest.put("selectedItems", mealSelections);
         jsonRequestResponse.sendRequest(jsonRequest);
         jsonRequestResponse.readResponse();
-    }
-
-    @SuppressWarnings("unchecked")
-    private void requestMenuForMealType(Map<String, List<String>> mealSelections, String mealType, int mealTypeId) throws IOException {
-        jsonRequest.put("requestType", "showRollOutMenuItems");
-        jsonRequest.put("mealType", mealTypeId);
-        jsonRequestResponse.sendRequest(jsonRequest);
-
-        System.out.println("Menu for " + mealType + ":");
-        jsonRequestResponse.readResponse();
-
-        List<String> itemIds = new ArrayList<>();
-        System.out.println("Select items for " + mealType + ":");
-        int itemId = inputValidations.getValidatedIntInput();
-
-        itemIds.add(String.valueOf(itemId));
-        mealSelections.put(mealType, itemIds);
     }
 
     private void handleGiveFeedback() throws IOException, ParseException {
@@ -151,7 +159,6 @@ public class EmployeeClient implements RoleHandler {
     @SuppressWarnings("unchecked")
     private void requestAndPrintMenu() throws IOException {
         jsonRequest.put("requestType", "showMenu");
-
         jsonRequestResponse.sendRequest(jsonRequest);
         jsonRequestResponse.readResponse();
     }
@@ -192,7 +199,7 @@ public class EmployeeClient implements RoleHandler {
         jsonRequestResponse.readResponse();
     }
 
-    @SuppressWarnings({"unchecked", "null"})
+    @SuppressWarnings("unchecked")
     private void showDiscardMenuItems() throws IOException, ParseException {
         jsonRequest.put("requestType", "showDiscardMenuItems");
         jsonRequestResponse.sendRequest(jsonRequest);
@@ -203,26 +210,32 @@ public class EmployeeClient implements RoleHandler {
         String response = jsonRequestResponse.readJSONresponse();
         System.out.println("Response: " + response);
 
-        if (response != null || response.isBlank()) {
-            JSONParser parser = new JSONParser();
-            JSONObject responseJson;
-            responseJson = (JSONObject) parser.parse(response);
-            String status = (String) responseJson.get("status");
+        if (response != null && !response.isBlank()) {
+            processDiscardMenuResponse(response);
+        }
+    }
 
-            if ("false".equals(status)) {
-                System.out.println("Currently no item has been added discard list ");
-            } else if ("success".equals(status)) {
-                String message = (String) responseJson.get("message");
-                String[] parts = message.split("\\?");
-                if (parts.length > 1) {
-                    System.out.println("Provide the feedback for below questions\n\n");
-                    for (String question : parts) {
-                        System.out.println(question);
-                        inputValidations.getValidatedStringInput();
-                    }
-                    System.out.println("Thank you for submitting feedback");
-                }
+    private void processDiscardMenuResponse(String response) throws ParseException, IOException {
+        JSONParser parser = new JSONParser();
+        JSONObject responseJson = (JSONObject) parser.parse(response);
+        String status = (String) responseJson.get("status");
+
+        if ("false".equals(status)) {
+            System.out.println("Currently no item has been added discard list ");
+        } else if ("success".equals(status)) {
+            processFeedbackQuestions((String) responseJson.get("message"));
+        }
+    }
+
+    private void processFeedbackQuestions(String message) throws IOException {
+        String[] parts = message.split("\\?");
+        if (parts.length > 1) {
+            System.out.println("Provide the feedback for below questions\n\n");
+            for (String question : parts) {
+                System.out.println(question);
+                inputValidations.getValidatedStringInput();
             }
+            System.out.println("Thank you for submitting feedback");
         }
     }
 }

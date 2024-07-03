@@ -1,13 +1,13 @@
-package finalproject;
+package client;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 
-public class InputValidations {
+public class ConsoleInputValidations {
 
     private final BufferedReader consoleReader;
 
-    public InputValidations(BufferedReader consoleReader) {
+    public ConsoleInputValidations(BufferedReader consoleReader) {
         this.consoleReader = consoleReader;
     }
 

@@ -1,4 +1,4 @@
-package finalproject;
+package server;
 
 import java.io.IOException;
 import java.io.PrintWriter;

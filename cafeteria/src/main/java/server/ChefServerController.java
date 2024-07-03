@@ -1,4 +1,4 @@
-package finalproject;
+package server;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -12,7 +12,7 @@ import java.util.List;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-public class ChefServer implements ClientRequestHandler {
+public class ChefServerController implements ClientRequestHandler {
 
     private static final String SELECT_ROLLOUT_MENU_ITEMS_QUERY
             = "SELECT rmi.rollout_item_id, mi.menu_item_id, mi.name, mi.price, mi.rating, mi.sentiments, rmi.rollout_date, rmi.vote "
@@ -31,18 +31,19 @@ public class ChefServer implements ClientRequestHandler {
         String action = (String) jsonData.get("requestType");
         System.out.println("Handling request: " + action);
 
-        switch (action) {
-            case "showRolloutMenuByVote" ->
-                showRollOutMenuByVote(jsonData, out);
-            case "insertRollOutMenuItem" ->
-                insertRollOutMenuItem(jsonData, out);
-            case "storeSelectedItemsInPreparedMenu" ->
-                storeSelectedItemsInPreparedMenu(jsonData, out);
-            default -> {
-                out.println("Invalid menu action");
-                out.println("END_OF_RESPONSE");
-                out.flush();
+        try {
+            switch (action) {
+                case "showRolloutMenuByVote" -> showRollOutMenuByVote(jsonData, out);
+                case "insertRollOutMenuItem" -> insertRollOutMenuItem(jsonData, out);
+                case "storeSelectedItemsInPreparedMenu" -> storeSelectedItemsInPreparedMenu(jsonData, out);
+                default -> {
+                    out.println("Invalid menu action");
+                    out.println("END_OF_RESPONSE");
+                    out.flush();
+                }
             }
+        } catch (Exception e) {
+            handleException(out, e);
         }
     }
 
@@ -50,14 +51,15 @@ public class ChefServer implements ClientRequestHandler {
         int mealType = ((Long) jsonData.get("mealType")).intValue();
         java.sql.Date currentDate = new java.sql.Date(System.currentTimeMillis());
 
-        try (Connection conn = Database.getConnection()) {
-            PreparedStatement stmt = conn.prepareStatement(SELECT_ROLLOUT_MENU_ITEMS_QUERY);
+        try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(SELECT_ROLLOUT_MENU_ITEMS_QUERY)) {
+
             stmt.setInt(1, mealType);
             stmt.setDate(2, currentDate);
 
-            ResultSet rs = stmt.executeQuery();
-            List<String> menuItems = formatMenuItems(rs);
-            sendResponse(out, menuItems, getRolloutMenuHeaders());
+            try (ResultSet rs = stmt.executeQuery()) {
+                List<String> menuItems = formatMenuItems(rs);
+                sendResponse(out, menuItems, getRolloutMenuHeaders());
+            }
 
         } catch (SQLException e) {
             handleSQLException(out, e);
@@ -70,15 +72,16 @@ public class ChefServer implements ClientRequestHandler {
         java.sql.Date currentDate = new java.sql.Date(System.currentTimeMillis());
 
         try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(INSERT_ROLLOUT_MENU_ITEM_QUERY)) {
+
             stmt.setInt(1, itemId);
             stmt.setDate(2, currentDate);
             stmt.setInt(3, mealId);
 
-            stmt.executeUpdate();
-            out.flush();
+            int rowsInserted = stmt.executeUpdate();
+            sendInsertionResponse(out, rowsInserted);
 
         } catch (SQLException e) {
-            out.println("Error occured in adding menu item");
+            out.println("Error occurred in adding menu item");
             handleSQLException(out, e);
         }
     }
@@ -87,6 +90,7 @@ public class ChefServer implements ClientRequestHandler {
         JSONArray selectedItems = (JSONArray) jsonData.get("selectedItems");
 
         try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(INSERT_PREPARED_MENU_QUERY)) {
+
             for (Object itemObj : selectedItems) {
                 JSONObject itemMap = (JSONObject) itemObj;
                 JSONArray itemIdsArray = (JSONArray) itemMap.get("menu_item_id");
@@ -97,8 +101,10 @@ public class ChefServer implements ClientRequestHandler {
                     stmt.addBatch();
                 }
             }
+
             int[] rowsInserted = stmt.executeBatch();
             sendBatchInsertionResponse(out, rowsInserted.length);
+
         } catch (SQLException e) {
             handleSQLException(out, e);
         }
@@ -128,15 +134,16 @@ public class ChefServer implements ClientRequestHandler {
         out.flush();
     }
 
-    // private void sendInsertionResponse(PrintWriter out, int rowsInserted) {
-    //     if (rowsInserted > 0) {
-    //         out.println("Rollout menu item added successfully");
-    //     } else {
-    //         out.println("Failed to add rollout menu item");
-    //     }
-    //     out.println("END_OF_RESPONSE");
-    //     out.flush();
-    // }
+    private void sendInsertionResponse(PrintWriter out, int rowsInserted) {
+        if (rowsInserted > 0) {
+            out.println("Rollout menu item added successfully");
+        } else {
+            out.println("Failed to add rollout menu item");
+        }
+        out.println("END_OF_RESPONSE");
+        out.flush();
+    }
+
     private void sendBatchInsertionResponse(PrintWriter out, int rowsInserted) {
         out.println("Prepared menu items added successfully: " + rowsInserted);
         out.println("END_OF_RESPONSE");
@@ -144,6 +151,12 @@ public class ChefServer implements ClientRequestHandler {
     }
 
     private void handleSQLException(PrintWriter out, SQLException e) {
+        out.println("Error processing request: " + e.getMessage());
+        out.println("END_OF_RESPONSE");
+        out.flush();
+    }
+
+    private void handleException(PrintWriter out, Exception e) {
         out.println("Error processing request: " + e.getMessage());
         out.println("END_OF_RESPONSE");
         out.flush();

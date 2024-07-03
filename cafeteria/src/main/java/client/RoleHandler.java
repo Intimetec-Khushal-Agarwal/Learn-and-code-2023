@@ -1,4 +1,4 @@
-package finalproject;
+package client;
 
 public interface RoleHandler {
 

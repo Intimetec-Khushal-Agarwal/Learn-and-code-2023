@@ -1,17 +1,19 @@
-package finalproject;
+package client;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.LocalDate;
+import java.util.List;
 
 import org.json.simple.JSONObject;
 
-public class JsonRequestResponse {
+public class ServerRequestResponse {
 
     private final PrintWriter socketWriter;
     private final BufferedReader socketReader;
 
-    public JsonRequestResponse(BufferedReader socketReader, PrintWriter socketWriter) {
+    public ServerRequestResponse(BufferedReader socketReader, PrintWriter socketWriter) {
         this.socketReader = socketReader;
         this.socketWriter = socketWriter;
     }
@@ -39,9 +41,20 @@ public class JsonRequestResponse {
         return responseBuilder.toString();
     }
 
-    public String readJSONresponse() throws IOException{
+    public String readJSONresponse() throws IOException {
         String response = socketReader.readLine();
         System.out.println(response);
         return response;
+    }
+
+    @SuppressWarnings("unchecked")
+    public void userLogs(String employeeId, List<String> operations) {
+        JSONObject logRequest = new JSONObject();
+        String loginTime = LocalDate.now().toString();
+        logRequest.put("requestType", "userLogs");
+        logRequest.put("userId", employeeId);
+        logRequest.put("operations", operations);
+        logRequest.put("loginTime", loginTime);
+        sendRequest(logRequest);
     }
 }

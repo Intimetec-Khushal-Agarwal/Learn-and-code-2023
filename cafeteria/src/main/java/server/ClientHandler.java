@@ -1,4 +1,4 @@
-package finalproject;
+package server;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -33,19 +33,19 @@ public class ClientHandler implements Runnable {
         handlers.put("addMenuItem", new AdminServerController());
         handlers.put("updateMenuItem", new AdminServerController());
         handlers.put("deleteMenuItem", new AdminServerController());
-        handlers.put("showRollOutMenuItems", new EmployeeServer());
-        handlers.put("processSelectedItems", new EmployeeServer());
-        handlers.put("checkUserVote", new EmployeeServer());
-        handlers.put("createRecommendation", new ChefServer());
-        handlers.put("generateReport", new ReportService());
-        handlers.put("selectMenuItem", new EmployeeServer());
-        handlers.put("storeSelectedItemsInPreparedMenu", new ChefServer());
-        handlers.put("giveFeedback", new FeedbackService());
-        handlers.put("showRolloutMenuByVote", new ChefServer());
-        handlers.put("insertRollOutMenuItem", new ChefServer());
+        handlers.put("showRollOutMenuItems", new EmployeeServerController());
+        handlers.put("processSelectedItems", new EmployeeServerController());
+        handlers.put("checkUserVote", new EmployeeServerController());
+        handlers.put("createRecommendation", new ChefServerController());
+        handlers.put("generateReport", new ReportServiceController());
+        handlers.put("selectMenuItem", new EmployeeServerController());
+        handlers.put("storeSelectedItemsInPreparedMenu", new ChefServerController());
+        handlers.put("giveFeedback", new FeedbackServerController());
+        handlers.put("showRolloutMenuByVote", new ChefServerController());
+        handlers.put("insertRollOutMenuItem", new ChefServerController());
         handlers.put("viewRecommendations", new RecommendationService());
-        handlers.put("checkExistingFeedback", new FeedbackService());
-        handlers.put("viewNotification", new NotificationService());
+        handlers.put("checkExistingFeedback", new FeedbackServerController());
+        handlers.put("viewNotification", new NotificationServiceController());
         handlers.put("updateUserProfile", new updateProfileServer());
 
         return handlers;

@@ -1,4 +1,4 @@
-package finalproject;
+package server;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -10,7 +10,7 @@ import java.sql.SQLException;
 
 import org.json.simple.JSONObject;
 
-public class FeedbackService implements ClientRequestHandler {
+public class FeedbackServerController implements ClientRequestHandler {
 
     private static final String CHECK_USER_FEEDBACK_SQL
             = "SELECT COUNT(*) FROM feedbacks WHERE user_id = ? AND menu_item_id = ? AND feedback_date = ?";
@@ -21,10 +21,17 @@ public class FeedbackService implements ClientRequestHandler {
     public void handleRequest(JSONObject jsonData, PrintWriter out) throws IOException {
         String action = (String) jsonData.get("requestType");
 
-        switch (action) {
-            case "giveFeedback" -> handleGiveFeedback(jsonData, out);
-            case "checkExistingFeedback" -> handleCheckExistingFeedback(jsonData, out);
-            default -> out.println("Invalid menu action");
+        try {
+            switch (action) {
+                case "giveFeedback" ->
+                    handleGiveFeedback(jsonData, out);
+                case "checkExistingFeedback" ->
+                    handleCheckExistingFeedback(jsonData, out);
+                default ->
+                    out.println("Invalid menu action");
+            }
+        } catch (Exception e) {
+            handleError(out, "Unexpected error occurred", e);
         }
     }
 
@@ -36,13 +43,14 @@ public class FeedbackService implements ClientRequestHandler {
 
         if (isMissingRequiredFields(menuId, userId, rating)) {
             out.println("Error: Missing required fields\n");
+            out.println("END_OF_RESPONSE");
+            out.flush();
             return;
         }
 
         Date currentDate = new Date(System.currentTimeMillis());
 
-        try (Connection conn = Database.getConnection(); 
-             PreparedStatement stmt = createInsertFeedbackStatement(conn, menuId, userId, comment, rating, currentDate)) {
+        try (Connection conn = Database.getConnection(); PreparedStatement stmt = createInsertFeedbackStatement(conn, menuId, userId, comment, rating, currentDate)) {
 
             int rowsInserted = stmt.executeUpdate();
             sendFeedbackResponse(out, rowsInserted > 0 ? "Feedback added successfully\n" : "Failed to add Feedback\n");
@@ -50,7 +58,7 @@ public class FeedbackService implements ClientRequestHandler {
         } catch (SQLException e) {
             handleError(out, "Error adding feedback", e);
         } catch (NumberFormatException e) {
-            out.println("Error: Invalid number format");
+            handleError(out, "Error: Invalid number format", e);
         }
     }
 
@@ -73,8 +81,7 @@ public class FeedbackService implements ClientRequestHandler {
         String itemId = (String) jsonData.get("itemId");
         Date currentDate = new Date(System.currentTimeMillis());
 
-        try (Connection conn = Database.getConnection(); 
-             PreparedStatement stmt = createCheckFeedbackStatement(conn, userId, itemId, currentDate)) {
+        try (Connection conn = Database.getConnection(); PreparedStatement stmt = createCheckFeedbackStatement(conn, userId, itemId, currentDate)) {
 
             boolean hasFeedback = checkFeedback(stmt);
             sendFeedbackResponse(out, hasFeedback + "\n");
@@ -93,20 +100,20 @@ public class FeedbackService implements ClientRequestHandler {
     }
 
     private boolean checkFeedback(PreparedStatement stmt) throws SQLException {
-        ResultSet rs = stmt.executeQuery();
-        return rs.next() && rs.getInt(1) > 0;
+        try (ResultSet rs = stmt.executeQuery()) {
+            return rs.next() && rs.getInt(1) > 0;
+        }
     }
 
     private void sendFeedbackResponse(PrintWriter out, String message) {
-        out.println(message+ "\n");
+        out.println(message);
         out.println("END_OF_RESPONSE");
         out.flush();
     }
 
-    private void handleError(PrintWriter out, String errorMessage, SQLException e) {
-        out.println(errorMessage);
+    private void handleError(PrintWriter out, String errorMessage, Exception e) {
+        out.println(errorMessage + " : " + e.getMessage());
         out.println("END_OF_RESPONSE");
         out.flush();
-        e.getMessage();
     }
 }

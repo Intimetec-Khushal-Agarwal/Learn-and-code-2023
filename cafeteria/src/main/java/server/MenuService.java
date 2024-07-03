@@ -1,4 +1,4 @@
-package finalproject;
+package server;
 
 import java.io.PrintWriter;
 import java.sql.Connection;
@@ -17,7 +17,8 @@ public class MenuService {
             + "RIGHT JOIN menu_types ON menu_items.meal_type_id = menu_types.meal_type_id ORDER BY menu_item_id";
 
     private static final String ADD_MENU_ITEM_QUERY
-            = "INSERT INTO menu_items (name, price, rating, meal_type_id,food_type_id,food_taste_id,food_preference_id,sweetTooth) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            = "INSERT INTO menu_items (name, price, rating, meal_type_id,food_type_id,food_taste_id,food_preference_id,sweetTooth)"
+            + " VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
     private static final String UPDATE_MENU_ITEM_QUERY
             = "UPDATE menu_items SET price = ?, availability_status = ? WHERE menu_item_id = ?";
@@ -29,7 +30,8 @@ public class MenuService {
         try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(SHOW_MENU_QUERY); ResultSet rs = stmt.executeQuery()) {
 
             out.println("Menu Items:");
-            out.printf("%-10s%-35s%-20s%-10s%-15s%-15s\n", "itemId", "name", "price", "status", "mealType", "sentiments");
+            out.printf("%-10s%-35s%-20s%-10s%-15s%-15s\n",
+                    "itemId", "name", "price", "status", "mealType", "sentiments");
             out.println("---------------------------------------------------------------------------------");
 
             while (rs.next()) {
@@ -44,68 +46,39 @@ public class MenuService {
             out.println("END_OF_RESPONSE\n");
             out.flush();
         } catch (SQLException e) {
-            out.println("Error showing menu items: " + e.getMessage());
+            handleSQLException(e, out, "Error showing menu items");
         }
     }
 
     public void addMenuItem(JSONObject request, PrintWriter out) {
-        String itemName = (String) request.get("name");
-        float itemPrice = ((Double) request.get("price")).floatValue();
-        int rating = ((Long) request.get("rating")).intValue();
-        int mealType = ((Long) request.get("mealType")).intValue();
-        int foodType = ((Long) request.get("foodType")).intValue();
-        int foodTaste = ((Long) request.get("foodTaste")).intValue();
-        int foodPreference = ((Long) request.get("foodPreference")).intValue();
-        int sweetTooth = ((Long) request.get("sweetTooth")).intValue();
-
         try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(ADD_MENU_ITEM_QUERY, Statement.RETURN_GENERATED_KEYS)) {
 
-            stmt.setString(1, itemName);
-            stmt.setFloat(2, itemPrice);
-            stmt.setInt(3, rating);
-            stmt.setInt(4, mealType);
-            stmt.setInt(5, foodType);
-            stmt.setInt(6, foodTaste);
-            stmt.setInt(7, foodPreference);
-            stmt.setInt(8, sweetTooth);
+            setMenuItemDetails(stmt, request);
 
             int rowsInserted = stmt.executeUpdate();
             if (rowsInserted > 0) {
-                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        int menuItemId = generatedKeys.getInt(1);
-                        NotificationService notificationService = new NotificationService();
-                        notificationService.addNotification(menuItemId, 1, out);
-                        out.println("Menu item added successfully");
-                    } else {
-                        out.println("Menu item added, but failed to retrieve menu item ID");
-                    }
-                }
+                handleGeneratedKeys(stmt, out, "Menu item added successfully", "Menu item added, but failed to retrieve menu item ID");
             } else {
                 out.println("Failed to add menu item");
             }
             out.println("END_OF_RESPONSE");
             out.flush();
         } catch (SQLException e) {
-            out.println("Error adding menu item: " + e.getMessage());
+            handleSQLException(e, out, "Error adding menu item");
         }
     }
 
     public void updateMenuItem(JSONObject request, PrintWriter out) {
-        int itemId = ((Long) request.get("id")).intValue();
-        float itemPrice = ((Double) request.get("price")).floatValue();
-        String itemStatus = (String) request.get("status");
-
         try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(UPDATE_MENU_ITEM_QUERY)) {
 
-            stmt.setFloat(1, itemPrice);
-            stmt.setString(2, itemStatus);
-            stmt.setInt(3, itemId);
+            stmt.setFloat(1, ((Double) request.get("price")).floatValue());
+            stmt.setString(2, (String) request.get("status"));
+            stmt.setInt(3, ((Long) request.get("id")).intValue());
 
             int rowsUpdated = stmt.executeUpdate();
             if (rowsUpdated > 0) {
-                NotificationService notificationService = new NotificationService();
-                notificationService.addNotification(itemId, 2, out);
+                NotificationServiceController notificationService = new NotificationServiceController();
+                notificationService.addNotification(((Long) request.get("id")).intValue(), 2, out);
                 out.println("Menu item updated successfully");
             } else {
                 out.println("Failed to update menu item");
@@ -113,16 +86,14 @@ public class MenuService {
             out.println("END_OF_RESPONSE");
             out.flush();
         } catch (SQLException e) {
-            out.println("Error updating menu item: " + e.getMessage());
+            handleSQLException(e, out, "Error updating menu item");
         }
     }
 
     public void deleteMenuItem(JSONObject request, PrintWriter out) {
-        int itemId = ((Long) request.get("id")).intValue();
-
         try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(DELETE_MENU_ITEM_QUERY)) {
 
-            stmt.setInt(1, itemId);
+            stmt.setInt(1, ((Long) request.get("id")).intValue());
             int rowsDeleted = stmt.executeUpdate();
             if (rowsDeleted > 0) {
                 out.println("Menu item deleted successfully");
@@ -132,7 +103,36 @@ public class MenuService {
             out.println("END_OF_RESPONSE");
             out.flush();
         } catch (SQLException e) {
-            out.println("Error deleting menu item: " + e.getMessage());
+            handleSQLException(e, out, "Error deleting menu item");
         }
+    }
+
+    private void setMenuItemDetails(PreparedStatement stmt, JSONObject request) throws SQLException {
+        stmt.setString(1, (String) request.get("name"));
+        stmt.setFloat(2, ((Double) request.get("price")).floatValue());
+        stmt.setInt(3, ((Long) request.get("rating")).intValue());
+        stmt.setInt(4, ((Long) request.get("mealType")).intValue());
+        stmt.setInt(5, ((Long) request.get("foodType")).intValue());
+        stmt.setInt(6, ((Long) request.get("foodTaste")).intValue());
+        stmt.setInt(7, ((Long) request.get("foodPreference")).intValue());
+        stmt.setInt(8, ((Long) request.get("sweetTooth")).intValue());
+    }
+
+    private void handleGeneratedKeys(PreparedStatement stmt, PrintWriter out, String successMessage, String failureMessage) throws SQLException {
+        try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+            if (generatedKeys.next()) {
+                int menuItemId = generatedKeys.getInt(1);
+                NotificationServiceController notificationService = new NotificationServiceController();
+                notificationService.addNotification(menuItemId, 1, out);
+                out.println(successMessage);
+            } else {
+                out.println(failureMessage);
+            }
+        }
+    }
+
+    private void handleSQLException(SQLException e, PrintWriter out, String message) {
+        out.println(message + ": " + e.getMessage());
+        System.err.println(message + ": " + e.getMessage());
     }
 }

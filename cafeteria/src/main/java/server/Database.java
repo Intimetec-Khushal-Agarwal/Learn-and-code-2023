@@ -1,4 +1,4 @@
-package finalproject;
+package server;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -11,12 +11,10 @@ public class Database {
     private static final String DB_USER = "root";
     private static final String DB_PASSWORD = "Root";
 
-    // Method to establish a database connection
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
     }
 
-    // Method to create all necessary tables
     public static void createTables() {
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
 
@@ -207,11 +205,11 @@ public class Database {
                     + "STARTS CURRENT_TIMESTAMP "
                     + "DO "
                     + "BEGIN "
-                    + "DELETE FROM feedbacks WHERE feedback_date < NOW() - INTERVAL 1 DAY; "
-                    + "DELETE FROM rollout_menu_items WHERE rollout_date < NOW() - INTERVAL 1 DAY; "
-                    + "DELETE FROM user_vote WHERE vote_date < NOW() - INTERVAL 1 DAY; "
-                    + "DELETE FROM notifications WHERE notification_date < NOW() - INTERVAL 1 DAY; "
-                    + "DELETE FROM prepared_menu WHERE prepared_date < NOW() - INTERVAL 1 MONTH; "
+                    + "DELETE FROM feedbacks WHERE feedback_date < CURDATE(); "
+                    + "DELETE FROM rollout_menu_items WHERE rollout_date < CURDATE(); "
+                    + "DELETE FROM user_vote WHERE vote_date < CURDATE(); "
+                    + "DELETE FROM notifications WHERE notification_date < CURDATE(); "
+                    + "DELETE FROM prepared_menu WHERE prepared_date < CURDATE() - INTERVAL 1 MONTH; "
                     + "END";
             stmt.execute(createEvent);
         } catch (SQLException e) {

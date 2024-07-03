@@ -1,4 +1,4 @@
-package finalproject;
+package server;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -24,15 +24,19 @@ public class AuthorizationService implements ClientRequestHandler {
     public void handleRequest(JSONObject jsonData, PrintWriter out) throws IOException {
         String action = (String) jsonData.get("requestType");
         System.out.println("Handling request: " + action);
-        switch (action) {
-            case "login" ->
-                login(jsonData, out);
-            case "userLogs" ->
-                insertUserLogs(jsonData, out);
-            case "showUserLogs" ->
-                showUserLogs(out);
-            default ->
-                out.println("Invalid menu action");
+        try {
+            switch (action) {
+                case "login" ->
+                    login(jsonData, out);
+                case "userLogs" ->
+                    insertUserLogs(jsonData, out);
+                case "showUserLogs" ->
+                    showUserLogs(out);
+                default ->
+                    out.println("Invalid menu action");
+            }
+        } catch (Exception e) {
+            handleException(e, out, "Error handling request");
         }
     }
 
@@ -43,30 +47,28 @@ public class AuthorizationService implements ClientRequestHandler {
 
         System.out.println("employeeId " + employeeId);
         System.out.println("name" + name);
-        try (Connection conn = Database.getConnection()) {
-            PreparedStatement stmt = conn.prepareStatement(LOGIN_QUERY);
+        try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(LOGIN_QUERY)) {
+
             stmt.setInt(1, Integer.parseInt(employeeId));
             stmt.setString(2, name);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                System.out.println("Inside rsNext login");
-                int roleId = rs.getInt("role_id");
-                JSONObject response = new JSONObject();
-                response.put("status", "success");
-                response.put("role", roleId);
-                System.out.println(response.toJSONString());
-                out.println(response.toJSONString());
-            } else {
-                JSONObject response = new JSONObject();
-                response.put("status", "fail");
-                out.println(response.toJSONString());
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    System.out.println("Inside rsNext login");
+                    int roleId = rs.getInt("role_id");
+                    JSONObject response = new JSONObject();
+                    response.put("status", "success");
+                    response.put("role", roleId);
+                    System.out.println(response.toJSONString());
+                    out.println(response.toJSONString());
+                } else {
+                    JSONObject response = new JSONObject();
+                    response.put("status", "fail");
+                    out.println(response.toJSONString());
+                }
             }
             out.flush();
         } catch (SQLException e) {
-            JSONObject response = new JSONObject();
-            response.put("status", "error");
-            response.put("message", e.getMessage());
-            out.println(response.toJSONString());
+            handleSQLException(e, out, "Error during login");
         }
     }
 
@@ -75,32 +77,23 @@ public class AuthorizationService implements ClientRequestHandler {
         String userId = (String) jsonData.get("userId");
         String loginTimeString = (String) jsonData.get("loginTime");
         Timestamp loginTime = convertStringToTimestamp(loginTimeString);
-        System.out.println(loginTime);
         Instant userLogoutTime = Instant.now();
         List<String> operationsList = (List<String>) jsonData.get("operations");
         String operations = String.join(", ", operationsList);
 
-        try (Connection conn = Database.getConnection()) {
-            PreparedStatement stmt = conn.prepareStatement(LOGS_QUERY);
+        try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(LOGS_QUERY)) {
+
             stmt.setString(1, userId);
             stmt.setTimestamp(2, loginTime);
             stmt.setTimestamp(3, Timestamp.from(userLogoutTime));
             stmt.setString(4, operations);
-            //int rowsInserted = stmt.executeUpdate();
             stmt.executeUpdate();
 
-            // JSONObject response = new JSONObject();
-            // if (rowsInserted > 0) {
-            //     response.put("status", "success");
-            // } else {
-            //     response.put("status", "fail");
-            // }
-            // out.println(response.toJSONString());
+            out.println("User logged out successfully");
+            out.println("END_OF_RESPONSE");
+            out.flush();
         } catch (SQLException e) {
-            JSONObject response = new JSONObject();
-            response.put("status", "error");
-            response.put("message", e.getMessage());
-            out.println(response.toJSONString());
+            handleSQLException(e, out, "Error inserting user logs");
         }
     }
 
@@ -108,19 +101,19 @@ public class AuthorizationService implements ClientRequestHandler {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
         String[] parts = timeString.split("\\.");
         LocalDateTime time = LocalDateTime.parse(parts[0], formatter);
-    
+
         if (parts.length > 1) {
             String fractionalSeconds = parts[1];
             fractionalSeconds = String.format("%-9s", fractionalSeconds).replace(' ', '0'); // Pad to nanoseconds
             time = time.plusNanos(Long.parseLong(fractionalSeconds));
         }
-    
+
         return Timestamp.valueOf(time);
     }
-    private void showUserLogs(PrintWriter out) {
 
+    private void showUserLogs(PrintWriter out) {
         try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(SHOW_USER_LOGS_QUERY); ResultSet rs = stmt.executeQuery()) {
-  
+
             out.println("User Logs:");
             out.printf("%-7s%-10s%-15s%-10s%-25s%-25s%-200s\n", "Log Id", "UserId", "Name", "Role", "loginTime", "LogoutTime", "Operations");
             out.println("---------------------------------------------------------------------------------");
@@ -139,7 +132,27 @@ public class AuthorizationService implements ClientRequestHandler {
             out.println("END_OF_RESPONSE");
             out.flush();
         } catch (SQLException e) {
-            out.println("Error showing user logs: " + e.getMessage());
+            handleSQLException(e, out, "Error showing user logs");
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void handleSQLException(SQLException e, PrintWriter out, String message) {
+        JSONObject response = new JSONObject();
+        response.put("status", "error");
+        response.put("message", message + ": " + e.getMessage());
+        out.println(response.toJSONString());
+        out.flush();
+        System.err.println(message + ": " + e.getMessage());
+    }
+
+    @SuppressWarnings("unchecked")
+    private void handleException(Exception e, PrintWriter out, String message) {
+        JSONObject response = new JSONObject();
+        response.put("status", "error");
+        response.put("message", message + ": " + e.getMessage());
+        out.println(response.toJSONString());
+        out.flush();
+        System.err.println(message + ": " + e.getMessage());
     }
 }
