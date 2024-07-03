@@ -1,26 +1,31 @@
-package finalproject;
+package client;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-public class ChefClient implements RoleHandler {
+public class ChefClientController implements RoleHandler {
+
+    private static final int SHOW_MENU = 1;
+    private static final int CREATE_RECOMMENDATION = 2;
+    private static final int CREATE_ROLLOUT_MENU = 3;
+    private static final int SELECT_MENU = 4;
+    private static final int DISCARD_MENU_ITEM = 5;
+    private static final int GENERATE_REPORT = 6;
+    private static final int EXIT = 7;
 
     private final List<String> operations;
     private final String employeeId;
     private final DiscardMenuItemController discardMenuItemController;
-    LocalDateTime loginTime;
-    private final JsonRequestResponse jsonRequestResponse;
-    private final InputValidations inputValidations;
+    private final ServerRequestResponse jsonRequestResponse;
+    private final ConsoleInputValidations inputValidations;
 
-    public ChefClient(DiscardMenuItemController discardMenuItemController, InputValidations inputValidations, JsonRequestResponse jsonRequestResponse, String employeeId) {
+    public ChefClientController(DiscardMenuItemController discardMenuItemController, ConsoleInputValidations inputValidations, ServerRequestResponse jsonRequestResponse, String employeeId) {
         this.employeeId = employeeId;
         this.operations = new ArrayList<>();
-        this.loginTime = LocalDateTime.now();
         this.discardMenuItemController = discardMenuItemController;
         this.jsonRequestResponse = jsonRequestResponse;
         this.inputValidations = inputValidations;
@@ -36,37 +41,38 @@ public class ChefClient implements RoleHandler {
                 displayMenu();
                 int command = inputValidations.getValidatedIntInput();
 
-                if (command == 6) {
-                    JSONObject userActivity = new JSONObject();
-                    userActivity.put("requestType", "userLogs");
-                    userActivity.put("userId", this.employeeId);
-                    userActivity.put("operations", operations);
-                    userActivity.put("loginTime", loginTime.toString());
-                    jsonRequestResponse.sendRequest(userActivity);
-                    System.out.println("Chef logged out successfully");
+                if (command == EXIT) {
+                    jsonRequestResponse.userLogs(employeeId, operations);
+                    jsonRequestResponse.readResponse();
                     break;
                 }
 
                 switch (command) {
-                    case 1 -> {
+                    case SHOW_MENU -> {
+                        JSONObject jsonRequest = new JSONObject();
+                        operations.add("showMenu");
+                        jsonRequest.put("requestType", "showMenu");
+                        jsonRequestResponse.sendRequest(jsonRequest);
+                        jsonRequestResponse.readResponse();
+                    }
+                    case CREATE_RECOMMENDATION -> {
                         operations.add("viewRecommendation");
                         handleCreateRecommendation();
                     }
-                    case 2 -> {
+                    case CREATE_ROLLOUT_MENU -> {
                         operations.add("rolloutMenu");
                         handleCreateRolloutMenu();
                     }
-                    case 3 -> {
+                    case SELECT_MENU -> {
                         operations.add("selectMenu");
                         handleSelectMenu();
                     }
-                    case 4 -> {
+                    case DISCARD_MENU_ITEM -> {
                         operations.add("discardMenuItem");
                         discardMenuItemController.discardMenuItems();
                     }
-
-                    case 5 -> {
-                        operations.add("genrateReport");
+                    case GENERATE_REPORT -> {
+                        operations.add("generateReport");
                         createMenuReport();
                     }
                     default ->
@@ -79,7 +85,7 @@ public class ChefClient implements RoleHandler {
     }
 
     private void displayMenu() {
-        System.out.println("Enter command:\n1. Create Recommendation\n2. Create Rollout Menu\n3. Select Menu\n4. Discard Menu Item\n5. Generate Report\n6. Exit");
+        System.out.println("Enter command:\n1. Show Menu\n2. Create Recommendation\n3. Create Rollout Menu\n4. Select Menu\n5. Discard Menu Item\n6. Generate Report\n7. Exit");
     }
 
     @SuppressWarnings("unchecked")
@@ -107,7 +113,6 @@ public class ChefClient implements RoleHandler {
                 itemData.put("meal_type_id", i + 1);
                 itemData.put("requestType", "insertRollOutMenuItem");
                 jsonRequestResponse.sendRequest(itemData);
-
             }
         }
         System.out.println("Menu Item added successfully");

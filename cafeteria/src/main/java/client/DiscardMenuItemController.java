@@ -1,4 +1,4 @@
-package finalproject;
+package client;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,11 +12,11 @@ import org.json.simple.parser.ParseException;
 
 public class DiscardMenuItemController {
 
-    private final InputValidations inputValidations;
-    private final JsonRequestResponse jsonRequestResponse;
+    private final ConsoleInputValidations inputValidations;
+    private final ServerRequestResponse jsonRequestResponse;
     JSONObject menuItem;
 
-    public DiscardMenuItemController(InputValidations inputValidations, JsonRequestResponse jsonRequestResponse, BufferedReader consoleReader) {
+    public DiscardMenuItemController(ConsoleInputValidations inputValidations, ServerRequestResponse jsonRequestResponse, BufferedReader consoleReader) {
         this.menuItem = new JSONObject();
         this.inputValidations = inputValidations;
         this.jsonRequestResponse = jsonRequestResponse;

@@ -1,17 +1,17 @@
-package finalproject;
+package client;
 
 import java.io.IOException;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 
-public class UpdateProfile {
+public class UpdateUserProfile {
 
     private final String employeeId;
-    private final InputValidations inputValidations;
-    private final JsonRequestResponse jsonRequestResponse;
+    private final ConsoleInputValidations inputValidations;
+    private final ServerRequestResponse jsonRequestResponse;
 
-    public UpdateProfile(InputValidations inputValidations, JsonRequestResponse jsonRequestResponse, String employeeId) {
+    public UpdateUserProfile(ConsoleInputValidations inputValidations, ServerRequestResponse jsonRequestResponse, String employeeId) {
         this.employeeId = employeeId;
         this.inputValidations = inputValidations;
         this.jsonRequestResponse = jsonRequestResponse;

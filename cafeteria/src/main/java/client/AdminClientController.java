@@ -1,7 +1,6 @@
-package finalproject;
+package client;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,21 +8,26 @@ import org.json.simple.JSONObject;
 
 public class AdminClientController implements RoleHandler {
 
+    private static final int SHOW_MENU = 1;
+    private static final int ADD_MENU_ITEM = 2;
+    private static final int UPDATE_MENU_ITEM = 3;
+    private static final int DELETE_MENU_ITEM = 4;
+    private static final int DISCARD_MENU_ITEM = 5;
+    private static final int EXIT = 6;
+
     private final List<String> operations;
     private final String employeeId;
-    LocalDateTime loginTime;
     private final DiscardMenuItemController discardMenuItemController;
-    private final UpdateProfile updateProfile;
-    private final JsonRequestResponse jsonRequestResponse;
-    private final InputValidations inputValidations;
+    private final UpdateUserProfile updateProfile;
+    private final ServerRequestResponse jsonRequestResponse;
+    private final ConsoleInputValidations inputValidations;
     private final JSONObject menuItem;
 
-    public AdminClientController(DiscardMenuItemController discardMenuItemController, InputValidations inputValidations, JsonRequestResponse jsonRequestResponse, String employeeId) {
+    public AdminClientController(DiscardMenuItemController discardMenuItemController, ConsoleInputValidations inputValidations, ServerRequestResponse jsonRequestResponse, String employeeId) {
         this.employeeId = employeeId;
         this.operations = new ArrayList<>();
-        this.loginTime = LocalDateTime.now();
         this.discardMenuItemController = discardMenuItemController;
-        this.updateProfile = new UpdateProfile(inputValidations, jsonRequestResponse, employeeId);
+        this.updateProfile = new UpdateUserProfile(inputValidations, jsonRequestResponse, employeeId);
         this.jsonRequestResponse = jsonRequestResponse;
         this.inputValidations = inputValidations;
         this.menuItem = new JSONObject();
@@ -34,45 +38,39 @@ public class AdminClientController implements RoleHandler {
     public void handleRoleOperations() {
         try {
             while (true) {
-                System.out.println("Enter operation to perform:\n1.showMenu\n2.addMenuItem\n3.updateMenuItem\n4.deleteMenuItem\n5.discardMenuItem\n6.exit ");
+                System.out.println("Enter operation to perform:\n1. Show Menu\n2. Add Menu Item\n3. Update Menu Item\n4. Delete Menu Item\n5. Discard Menu Item\n6. Exit ");
                 int command = inputValidations.getValidatedIntInput();
-                if (command == 6) {
 
-                    menuItem.put("requestType", "userLogs");
-                    menuItem.put("userId", this.employeeId);
-                    menuItem.put("operations", operations);
-                    menuItem.put("loginTime", loginTime.toString());
-                    jsonRequestResponse.sendRequest(menuItem);
-                    System.out.println("Admin logged out successfully");
+                if (command == EXIT) {
+                    jsonRequestResponse.userLogs(employeeId, operations);
+                    jsonRequestResponse.readResponse();
                     break;
                 }
 
                 switch (command) {
-                    case 1 -> {
+                    case SHOW_MENU -> {
                         operations.add("showMenu");
                         menuItem.put("requestType", "showMenu");
                         displayMenu(menuItem);
                     }
-                    case 2 -> {
+                    case ADD_MENU_ITEM -> {
                         operations.add("addMenu");
                         addMenuItem(menuItem);
                     }
-                    case 3 -> {
+                    case UPDATE_MENU_ITEM -> {
                         operations.add("updateMenu");
                         updateMenuItem(menuItem);
                     }
-                    case 4 -> {
+                    case DELETE_MENU_ITEM -> {
                         operations.add("deleteMenu");
                         deleteMenuItem(menuItem);
                     }
-                    case 5 -> {
+                    case DISCARD_MENU_ITEM -> {
                         operations.add("discardMenuItem");
                         discardMenuItemController.discardMenuItems();
                     }
-                    default -> {
+                    default ->
                         System.out.println("Invalid command");
-                        continue;
-                    }
                 }
             }
         } catch (IOException e) {
@@ -86,7 +84,7 @@ public class AdminClientController implements RoleHandler {
         String itemName = inputValidations.getValidatedStringInput();
         System.out.println("Enter item price: ");
         float itemPrice = inputValidations.getValidatedFloatInput();
-        System.out.println("Enter item Rating(1-5): ");
+        System.out.println("Enter item Rating (1-5): ");
         int rating = inputValidations.getValidatedOption(5);
         System.out.println("Enter item availability status (yes/no): ");
         String itemStatus = inputValidations.getValidatedBooleanInput();
@@ -117,7 +115,7 @@ public class AdminClientController implements RoleHandler {
         int itemId = inputValidations.getValidatedIntInput();
         System.out.println("Enter item price: ");
         float itemPrice = inputValidations.getValidatedFloatInput();
-        System.out.println("Enter item availability status(yes/no): ");
+        System.out.println("Enter item availability status (yes/no): ");
         String itemStatus = inputValidations.getValidatedBooleanInput();
 
         menuItem.put("requestType", "updateMenuItem");
@@ -126,7 +124,6 @@ public class AdminClientController implements RoleHandler {
         menuItem.put("status", itemStatus);
 
         displayMenu(menuItem);
-
     }
 
     @SuppressWarnings("unchecked")
@@ -137,11 +134,10 @@ public class AdminClientController implements RoleHandler {
         menuItem.put("id", itemId);
 
         displayMenu(menuItem);
-
     }
 
     private void displayMenu(JSONObject menuItem) throws IOException {
-        System.out.println("inside display menu");
+        System.out.println("Inside display menu");
         jsonRequestResponse.sendRequest(menuItem);
         jsonRequestResponse.readResponse();
     }

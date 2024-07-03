@@ -1,4 +1,4 @@
-package finalproject;
+package server;
 
 import java.io.PrintWriter;
 import java.sql.Connection;
@@ -8,9 +8,9 @@ import java.sql.SQLException;
 
 import org.json.simple.JSONObject;
 
-class ReportService implements ClientRequestHandler {
+public class ReportServiceController implements ClientRequestHandler {
 
-    private static final String GENRATE_REPORT_QUERY = "SELECT mi.name, mi.rating, mi.sentiments, mi.sentiment_score, COUNT(pm.menu_item_id) AS count "
+    private static final String GENERATE_REPORT_QUERY = "SELECT mi.name, mi.rating, mi.sentiments, mi.sentiment_score, COUNT(pm.menu_item_id) AS count "
             + "FROM prepared_menu pm "
             + "JOIN menu_items mi ON pm.menu_item_id = mi.menu_item_id "
             + "GROUP BY mi.name, mi.rating, mi.sentiments, mi.sentiment_score";
@@ -21,16 +21,17 @@ class ReportService implements ClientRequestHandler {
 
         switch (action) {
             case "generateReport" ->
-            generateReport(out);
+                generateReport(out);
             default ->
                 out.println("Invalid menu action");
         }
     }
 
     private void generateReport(PrintWriter out) {
-        try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(GENRATE_REPORT_QUERY); ResultSet rs = stmt.executeQuery()) {
+        try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(GENERATE_REPORT_QUERY); ResultSet rs = stmt.executeQuery()) {
+
             out.println("Menu Report:");
-            out.printf("%-25s%-10s%-20s%-25s%-10s\n", "Name", "Rating", "Sentiments", "Sentiment Score", "Count");
+            out.printf("%-35s%-10s%-20s%-15s%-10s\n", "Name", "Rating", "Sentiments", "Sentiment Score", "Count");
             out.println("---------------------------------------------------------------------------------");
 
             while (rs.next()) {
@@ -39,13 +40,15 @@ class ReportService implements ClientRequestHandler {
                 String sentiments = rs.getString("sentiments");
                 double sentimentScore = rs.getDouble("sentiment_score");
                 int count = rs.getInt("count");
+
                 out.printf("%-35s%-10.2f%-20s%-15.2f%-10d\n", name, rating, sentiments, sentimentScore, count);
             }
-            out.println("END_OF_RESPONSE\n");
-            out.flush();
-        } catch (SQLException e) {
-            out.println("Error showing menu items: " + e.getMessage());
-        }
 
+            out.println("END_OF_RESPONSE");
+            out.flush();
+
+        } catch (SQLException e) {
+            out.println("Error generating report: " + e.getMessage());
+        }
     }
 }

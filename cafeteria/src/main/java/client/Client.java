@@ -1,4 +1,4 @@
-package finalproject;
+package client;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -20,8 +20,8 @@ public class Client {
     private static BufferedReader consoleReader = null;
     private static DiscardMenuItemController discardMenuItemController = null;
     private static int employeeId;
-    private static InputValidations inputValidations;
-    private static JsonRequestResponse jsonRequestResponse;
+    private static ConsoleInputValidations inputValidations;
+    private static ServerRequestResponse jsonRequestResponse;
 
     public static void main(String[] args) {
         try {
@@ -39,8 +39,8 @@ public class Client {
         socketReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         consoleReader = new BufferedReader(new InputStreamReader(System.in));
         socketWriter = new PrintWriter(socket.getOutputStream(), true);
-        inputValidations = new InputValidations(consoleReader);
-        jsonRequestResponse = new JsonRequestResponse(socketReader, socketWriter);
+        inputValidations = new ConsoleInputValidations(consoleReader);
+        jsonRequestResponse = new ServerRequestResponse(socketReader, socketWriter);
         discardMenuItemController = new DiscardMenuItemController(inputValidations, jsonRequestResponse, consoleReader);
 
     }
@@ -106,11 +106,11 @@ public class Client {
             }
             case 2 -> {
                 System.out.println("Chef Login Successfully");
-                return new ChefClient(discardMenuItemController, inputValidations, jsonRequestResponse, String.valueOf(employeeId));
+                return new ChefClientController(discardMenuItemController, inputValidations, jsonRequestResponse, String.valueOf(employeeId));
             }
             case 3 -> {
                 System.out.println("Employee Login Successfully");
-                return new EmployeeClient(inputValidations, jsonRequestResponse, String.valueOf(employeeId));
+                return new EmployeeClientController(inputValidations, jsonRequestResponse, String.valueOf(employeeId));
             }
             default ->
                 throw new IllegalArgumentException("Unknown role ID: " + roleId);
