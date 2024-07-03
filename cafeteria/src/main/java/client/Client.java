@@ -83,14 +83,12 @@ public class Client {
 
     private static void processLoginResponse() throws IOException, ParseException {
         String response = socketReader.readLine();
-        System.out.println("Response: " + response);
 
         JSONObject responseJson = (JSONObject) new JSONParser().parse(response);
         String status = (String) responseJson.get("status");
 
         if ("success".equals(status)) {
             int roleId = ((Long) responseJson.get("role")).intValue();
-            System.out.println("Login successful. Role ID: " + roleId);
             RoleHandler roleHandler = createRoleHandler(roleId, String.valueOf(employeeId));
             roleHandler.handleRoleOperations();
         } else {

@@ -86,8 +86,6 @@ public class AdminClientController implements RoleHandler {
         float itemPrice = inputValidations.getValidatedFloatInput();
         System.out.println("Enter item Rating (1-5): ");
         int rating = inputValidations.getValidatedOption(5);
-        System.out.println("Enter item availability status (yes/no): ");
-        String itemStatus = inputValidations.getValidatedBooleanInput();
         System.out.println("Enter meal type (1. Breakfast, 2. Lunch, 3. Dinner): ");
         int mealType = inputValidations.getValidatedOption(3);
         int dietaryPreference = updateProfile.getDietaryPreference();
@@ -98,7 +96,6 @@ public class AdminClientController implements RoleHandler {
         menuItem.put("requestType", "addMenuItem");
         menuItem.put("name", itemName);
         menuItem.put("price", itemPrice);
-        menuItem.put("status", itemStatus);
         menuItem.put("rating", rating);
         menuItem.put("mealType", mealType);
         menuItem.put("foodType", dietaryPreference);

@@ -104,7 +104,7 @@ public class AuthorizationService implements ClientRequestHandler {
 
         if (parts.length > 1) {
             String fractionalSeconds = parts[1];
-            fractionalSeconds = String.format("%-9s", fractionalSeconds).replace(' ', '0'); // Pad to nanoseconds
+            fractionalSeconds = String.format("%-9s", fractionalSeconds).replace(' ', '0');
             time = time.plusNanos(Long.parseLong(fractionalSeconds));
         }
 

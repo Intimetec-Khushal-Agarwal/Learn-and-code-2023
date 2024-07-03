@@ -3,7 +3,7 @@ package client;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.json.simple.JSONObject;
@@ -43,18 +43,17 @@ public class ServerRequestResponse {
 
     public String readJSONresponse() throws IOException {
         String response = socketReader.readLine();
-        System.out.println(response);
         return response;
     }
 
     @SuppressWarnings("unchecked")
     public void userLogs(String employeeId, List<String> operations) {
         JSONObject logRequest = new JSONObject();
-        String loginTime = LocalDate.now().toString();
+        LocalDateTime loginTime = LocalDateTime.now();
         logRequest.put("requestType", "userLogs");
         logRequest.put("userId", employeeId);
         logRequest.put("operations", operations);
-        logRequest.put("loginTime", loginTime);
+        logRequest.put("loginTime", loginTime.toString());
         sendRequest(logRequest);
     }
 }

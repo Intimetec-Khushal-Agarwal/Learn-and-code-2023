@@ -29,13 +29,15 @@ public class ChefServerController implements ClientRequestHandler {
     @Override
     public void handleRequest(JSONObject jsonData, PrintWriter out) throws IOException {
         String action = (String) jsonData.get("requestType");
-        System.out.println("Handling request: " + action);
 
         try {
             switch (action) {
-                case "showRolloutMenuByVote" -> showRollOutMenuByVote(jsonData, out);
-                case "insertRollOutMenuItem" -> insertRollOutMenuItem(jsonData, out);
-                case "storeSelectedItemsInPreparedMenu" -> storeSelectedItemsInPreparedMenu(jsonData, out);
+                case "showRolloutMenuByVote" ->
+                    showRollOutMenuByVote(jsonData, out);
+                case "insertRollOutMenuItem" ->
+                    insertRollOutMenuItem(jsonData, out);
+                case "storeSelectedItemsInPreparedMenu" ->
+                    storeSelectedItemsInPreparedMenu(jsonData, out);
                 default -> {
                     out.println("Invalid menu action");
                     out.println("END_OF_RESPONSE");
@@ -77,8 +79,7 @@ public class ChefServerController implements ClientRequestHandler {
             stmt.setDate(2, currentDate);
             stmt.setInt(3, mealId);
 
-            int rowsInserted = stmt.executeUpdate();
-            sendInsertionResponse(out, rowsInserted);
+            stmt.executeBatch();
 
         } catch (SQLException e) {
             out.println("Error occurred in adding menu item");
@@ -130,16 +131,6 @@ public class ChefServerController implements ClientRequestHandler {
     private void sendResponse(PrintWriter out, List<String> items, String headers) {
         out.println(headers);
         items.forEach(out::println);
-        out.println("END_OF_RESPONSE");
-        out.flush();
-    }
-
-    private void sendInsertionResponse(PrintWriter out, int rowsInserted) {
-        if (rowsInserted > 0) {
-            out.println("Rollout menu item added successfully");
-        } else {
-            out.println("Failed to add rollout menu item");
-        }
         out.println("END_OF_RESPONSE");
         out.flush();
     }

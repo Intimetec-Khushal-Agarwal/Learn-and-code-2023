@@ -18,7 +18,7 @@ public class EmployeeServerController implements ClientRequestHandler {
     private static final String INSERT_USER_SELECTION_SQL = "INSERT INTO user_vote (user_id, vote_date) VALUES (?, ?)";
     private static final String CHECK_USER_VOTE_SQL = "SELECT COUNT(*) FROM user_vote WHERE user_id = ? AND vote_date = ?";
     private static final String GET_USER_PREFERENCE_SQL = "SELECT food_type_id, sweetTooth, food_preference_id, food_taste_id FROM users WHERE user_id = ?";
-    private static final String NEXT_DAY_MENU_ITEM_SQL = "SELECT rmi.rollout_item_id, mi.menu_item_id, mi.name, mi.price, mi.rating, mi.sentiments, rmi.rollout_date, "
+    private static final String NEXT_DAY_MENU_ITEM_SQL = "SELECT mi.menu_item_id,rmi.rollout_item_id, mi.name, mi.price, mi.rating, mi.sentiments, rmi.rollout_date, "
             + "ft.food_type_name AS food_type_name, fp.food_preference_name AS food_preference_name, ft1.spice_level AS spice_level, mi.sweetTooth "
             + "FROM rollout_menu_items rmi "
             + "JOIN menu_items mi ON rmi.menu_item_id = mi.menu_item_id "

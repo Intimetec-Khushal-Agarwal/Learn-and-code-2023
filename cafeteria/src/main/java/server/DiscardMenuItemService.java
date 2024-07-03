@@ -26,7 +26,7 @@ public class DiscardMenuItemService implements ClientRequestHandler {
     private static final String STORE_DISCARD_MENU_QUERY = "INSERT INTO discard_items (menu_item_id, discard_date, message_id, name) VALUES (?, CURRENT_DATE, ?, (SELECT name FROM menu_items WHERE menu_item_id = ?))";
 
     private static final String GET_DISCARD_MENU_ITEM_LIST = "SELECT discard_date, menu_item_id, message_id FROM discard_items ORDER BY discard_date DESC";
-    private static final String GET_LATEST_DISCARDED_ITEM_QUERY = "SELECT di.menu_item_id, name, di.discard_date, di.message_id, nm.message "
+    private static final String GET_LATEST_DISCARDED_ITEM_QUERY = "SELECT di.menu_item_id, discard_item_name, di.discard_date, di.message_id, nm.message "
             + "FROM discard_items di "
             + "LEFT JOIN menu_items mi ON di.menu_item_id = mi.menu_item_id "
             + "LEFT JOIN notifiedmessages nm ON di.message_id = nm.id "
@@ -137,7 +137,7 @@ public class DiscardMenuItemService implements ClientRequestHandler {
 
                 while (rs.next()) {
                     int menuItemId = rs.getInt("menu_item_id");
-                    String name = rs.getString("name");
+                    String name = rs.getString("discard_item_name");
                     String date = rs.getDate("discard_date").toString();
                     String message = rs.getString("message");
 

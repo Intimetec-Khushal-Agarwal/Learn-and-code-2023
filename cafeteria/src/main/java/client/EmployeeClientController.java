@@ -49,16 +49,26 @@ public class EmployeeClientController implements RoleHandler {
                 }
 
                 switch (command) {
-                    case SELECT_MENU_ITEM ->
+                    case SELECT_MENU_ITEM -> {
+                        operations.add("Select Menu Item");
                         handleSelectMenuItem();
-                    case GIVE_FEEDBACK ->
+                    }
+                    case GIVE_FEEDBACK -> {
+                        operations.add("Five Feedback");
                         handleGiveFeedback();
-                    case VIEW_NOTIFICATION ->
+                    }
+                    case VIEW_NOTIFICATION -> {
+                        operations.add("View Notification");
                         viewNotification();
-                    case VIEW_DISCARD_MENU_ITEM ->
+                    }
+                    case VIEW_DISCARD_MENU_ITEM -> {
+                        operations.add("View Discard Menu");
                         showDiscardMenuItems();
-                    case UPDATE_PROFILE ->
-                        updateProfile.updateUserProfile();
+                    }
+                    case UPDATE_PROFILE -> {
+                        operations.add("Update Profile");
+                                                updateProfile.updateUserProfile();
+                    }
                     default ->
                         System.out.println("Invalid command");
                 }
@@ -203,12 +213,9 @@ public class EmployeeClientController implements RoleHandler {
     private void showDiscardMenuItems() throws IOException, ParseException {
         jsonRequest.put("requestType", "showDiscardMenuItems");
         jsonRequestResponse.sendRequest(jsonRequest);
-        System.out.println("Request send successfully");
         jsonRequestResponse.readResponse();
-        System.out.println("Response read");
 
         String response = jsonRequestResponse.readJSONresponse();
-        System.out.println("Response: " + response);
 
         if (response != null && !response.isBlank()) {
             processDiscardMenuResponse(response);
