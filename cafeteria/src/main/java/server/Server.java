@@ -1,11 +1,14 @@
 package server;
 
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import database.DatabaseEventScheduler;
+import database.DatabaseInitializer;
+import serverController.ClientHandler;
 
 public class Server {
 
@@ -15,9 +18,9 @@ public class Server {
     @SuppressWarnings("resource")
     public static void main(String[] args) throws IOException {
         ServerSocket serverSocket = new ServerSocket(PORT);
-        Database.createTables();
-        Database.enableEventScheduler();
-        Database.createScheduledEvent();
+        DatabaseInitializer.createTables();
+        DatabaseEventScheduler.enableEventScheduler();
+        DatabaseEventScheduler.createScheduledEvent();
 
         while (true) {
             Socket clientSocket = serverSocket.accept();
