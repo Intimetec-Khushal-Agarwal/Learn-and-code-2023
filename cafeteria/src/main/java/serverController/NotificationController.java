@@ -13,14 +13,14 @@ public class NotificationController implements ClientRequestHandler {
     private final NotificationService notificationService = new NotificationService();
 
     @Override
-    public void handleRequest(JSONObject jsonData, PrintWriter out) throws IOException {
+    public void handleRequest(JSONObject jsonData, PrintWriter socketWriter) throws IOException {
         String action = (String) jsonData.get("requestType");
 
         switch (action) {
             case "viewNotification" ->
-                notificationService.viewNotifications(out);
+                notificationService.viewNotifications(socketWriter);
             default ->
-                ErrorHandler.handleInvalidAction(out);
+                ErrorHandler.handleInvalidAction(socketWriter);
         }
     }
 }

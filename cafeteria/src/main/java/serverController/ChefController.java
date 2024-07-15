@@ -13,22 +13,22 @@ public class ChefController implements ClientRequestHandler {
     private final ChefService chefService = new ChefService();
 
     @Override
-    public void handleRequest(JSONObject jsonData, PrintWriter out) throws IOException {
+    public void handleRequest(JSONObject jsonData, PrintWriter socketWriter) throws IOException {
         String action = (String) jsonData.get("requestType");
         try {
             switch (action) {
                 case "showRolloutMenuByVote" ->
-                    chefService.showRolloutMenuByVote(jsonData, out);
+                    chefService.showRolloutMenuByVote(jsonData, socketWriter);
                 case "insertRollOutMenuItem" ->
-                    chefService.insertRolloutMenuItem(jsonData, out);
+                    chefService.insertRolloutMenuItem(jsonData, socketWriter);
                 case "storeSelectedItemsInPreparedMenu" ->
-                    chefService.storeSelectedItemsInPreparedMenu(jsonData, out);
+                    chefService.storeSelectedItemsInPreparedMenu(jsonData, socketWriter);
                 default -> {
-                    ErrorHandler.handleInvalidAction(out);
+                    ErrorHandler.handleInvalidAction(socketWriter);
                 }
             }
         } catch (Exception e) {
-            ErrorHandler.handleException(e, out);
+            ErrorHandler.handleException(e, socketWriter);
         }
     }
 }

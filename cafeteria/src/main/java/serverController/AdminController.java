@@ -19,24 +19,24 @@ public class AdminController implements ClientRequestHandler {
     }
 
     @Override
-    public void handleRequest(JSONObject request, PrintWriter out) {
+    public void handleRequest(JSONObject request, PrintWriter socketWriter) {
         String action = (String) request.get("requestType");
 
         try {
             switch (action) {
                 case "showMenu" ->
-                    queryHandler.showMenuItems(out);
+                    queryHandler.showMenuItems(socketWriter);
                 case "addMenuItem" ->
-                    menuActionHandler.addMenuItem(request, out);
+                    menuActionHandler.addMenuItem(request, socketWriter);
                 case "updateMenuItem" ->
-                    menuActionHandler.updateMenuItem(request, out);
+                    menuActionHandler.updateMenuItem(request, socketWriter);
                 case "deleteMenuItem" ->
-                    menuActionHandler.deleteMenuItem(request, out);
+                    menuActionHandler.deleteMenuItem(request, socketWriter);
                 default ->
-                    ErrorHandler.handleInvalidAction(out);
+                    ErrorHandler.handleInvalidAction(socketWriter);
             }
         } catch (Exception e) {
-            ErrorHandler.handleException(e, out);
+            ErrorHandler.handleException(e, socketWriter);
         }
     }
 }

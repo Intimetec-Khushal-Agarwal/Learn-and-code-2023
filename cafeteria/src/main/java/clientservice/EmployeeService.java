@@ -75,12 +75,12 @@ public class EmployeeService {
         if (response.contains("Currently, the menu item list is not prepared")) {
             return false;
         }
-        List<String> itemIds = getSelectedItemIds(mealType);
+        List<String> itemIds = getSelectedItemIds();
         mealSelections.put(mealType, itemIds);
         return true;
     }
 
-    private List<String> getSelectedItemIds(String mealType) throws IOException {
+    private List<String> getSelectedItemIds() throws IOException {
         List<String> itemIds = new ArrayList<>();
         int itemId = inputValidations.getValidatedIntInput();
         itemIds.add(String.valueOf(itemId));
@@ -177,11 +177,13 @@ public class EmployeeService {
         }
     }
 
+    @SuppressWarnings("unused")
     private void processFeedbackQuestions(String message) throws IOException {
         String[] parts = message.split("\\?");
         if (parts.length > 1) {
             System.out.println("Provide the feedback for below questions\n\n");
             for (String question : parts) {
+                System.out.println(question);
                 inputValidations.getValidatedStringInput();
             }
             System.out.println("Thank you for submitting feedback");

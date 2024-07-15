@@ -20,21 +20,21 @@ public class AuthorizeController implements ClientRequestHandler {
     }
 
     @Override
-    public void handleRequest(JSONObject jsonData, PrintWriter out) throws IOException {
+    public void handleRequest(JSONObject jsonData, PrintWriter socketWriter) throws IOException {
         String action = (String) jsonData.get("requestType");
         try {
             switch (action) {
                 case "login" ->
-                    loginService.login(jsonData, out);
+                    loginService.login(jsonData, socketWriter);
                 case "userLogs" ->
-                    userLogService.insertUserLogs(jsonData, out);
+                    userLogService.insertUserLogs(jsonData, socketWriter);
                 case "showUserLogs" ->
-                    userLogService.showUserLogs(out);
+                    userLogService.showUserLogs(socketWriter);
                 default ->
-                    ErrorHandler.handleInvalidAction(out);
+                    ErrorHandler.handleInvalidAction(socketWriter);
             }
         } catch (Exception e) {
-            ErrorHandler.handleJSONException(e, out, "Error handling request");
+            ErrorHandler.handleJSONException(e, socketWriter, "Error handling request");
         }
     }
 }

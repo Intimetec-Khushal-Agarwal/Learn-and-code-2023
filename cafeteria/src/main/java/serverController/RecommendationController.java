@@ -14,21 +14,21 @@ public class RecommendationController implements ClientRequestHandler {
     private final RecommendationService recommendationProcessor = new RecommendationService();
 
     @Override
-    public void handleRequest(JSONObject jsonData, PrintWriter out) throws IOException {
+    public void handleRequest(JSONObject jsonData, PrintWriter socketWriter) throws IOException {
         String action = (String) jsonData.get("requestType");
 
         switch (action) {
             case "viewRecommendations" -> {
                 try {
-                    recommendationProcessor.viewRecommendations(out);
+                    recommendationProcessor.viewRecommendations(socketWriter);
                 } catch (SQLException ex) {
-                    out.println("Error fetching recommendations.");
-                    out.println("END_OF_RESPONSE");
-                    out.flush();
+                    socketWriter.println("Error fetching recommendations.");
+                    socketWriter.println("END_OF_RESPONSE");
+                    socketWriter.flush();
                 }
             }
             default -> {
-                ErrorHandler.handleInvalidAction(out);
+                ErrorHandler.handleInvalidAction(socketWriter);
             }
         }
     }

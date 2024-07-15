@@ -55,8 +55,8 @@ public class ClientHandler implements Runnable {
 
     @Override
     public void run() {
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
-            handleClientRequests(in, out);
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); PrintWriter socketWriter = new PrintWriter(clientSocket.getOutputStream(), true)) {
+            handleClientRequests(in, socketWriter);
         } catch (IOException ex) {
             ErrorHandler.handleIOException(ex);
         } finally {
@@ -64,7 +64,7 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    private void handleClientRequests(BufferedReader in, PrintWriter out) throws IOException {
+    private void handleClientRequests(BufferedReader in, PrintWriter socketWriter) throws IOException {
         String line;
         while ((line = in.readLine()) != null) {
             StringBuilder requestBuilder = new StringBuilder();
@@ -85,25 +85,25 @@ public class ClientHandler implements Runnable {
 
             JSONObject jsonData = (JSONObject) JSONValue.parse(requestData);
             if (jsonData != null) {
-                handleRequest(jsonData, out);
+                handleRequest(jsonData, socketWriter);
                 String requestType = (String) jsonData.get("requestType");
                 if ("exit".equalsIgnoreCase(requestType)) {
                     break;
                 }
             } else {
-                out.println("Invalid JSON data.");
+                socketWriter.println("Invalid JSON data.");
             }
         }
     }
 
-    private void handleRequest(JSONObject jsonData, PrintWriter out) throws IOException {
+    private void handleRequest(JSONObject jsonData, PrintWriter socketWriter) throws IOException {
         String requestType = (String) jsonData.get("requestType");
         ClientRequestHandler handler = requestHandlers.get(requestType);
 
         if (handler != null) {
-            handler.handleRequest(jsonData, out);
+            handler.handleRequest(jsonData, socketWriter);
         } else {
-            out.println("Invalid request type: " + requestType);
+            socketWriter.println("Invalid request type: " + requestType);
         }
     }
 

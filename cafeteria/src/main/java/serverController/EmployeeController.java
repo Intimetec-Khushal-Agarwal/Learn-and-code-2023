@@ -17,22 +17,22 @@ public class EmployeeController implements ClientRequestHandler {
     }
 
     @Override
-    public void handleRequest(JSONObject jsonData, PrintWriter out) throws IOException {
+    public void handleRequest(JSONObject jsonData, PrintWriter socketWriter) throws IOException {
         String action = (String) jsonData.get("requestType");
 
         try {
             switch (action) {
                 case "showRollOutMenuItems" ->
-                    employeeService.showRollOutMenuItems(jsonData, out);
+                    employeeService.showRollOutMenuItems(jsonData, socketWriter);
                 case "processSelectedItems" ->
-                    employeeService.processSelectedItems(jsonData, out);
+                    employeeService.processSelectedItems(jsonData, socketWriter);
                 case "checkUserVote" ->
-                    employeeService.checkUserVote(jsonData, out);
+                    employeeService.checkUserVote(jsonData, socketWriter);
                 default ->
-                    ErrorHandler.handleInvalidAction(out);
+                    ErrorHandler.handleInvalidAction(socketWriter);
             }
         } catch (Exception e) {
-            ErrorHandler.handleException(e, out);
+            ErrorHandler.handleException(e, socketWriter);
         }
     }
 }

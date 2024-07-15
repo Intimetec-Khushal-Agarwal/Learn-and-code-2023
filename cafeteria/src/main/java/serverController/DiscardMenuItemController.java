@@ -17,18 +17,18 @@ public class DiscardMenuItemController implements ClientRequestHandler {
     }
 
     @Override
-    public void handleRequest(JSONObject request, PrintWriter out) throws IOException {
+    public void handleRequest(JSONObject request, PrintWriter socketWriter) throws IOException {
         String action = (String) request.get("requestType");
 
         switch (action) {
             case "discardMenuItem" ->
-                discardMenuItemDbService.showDiscardMenuItemList(out);
+                discardMenuItemDbService.showDiscardMenuItemList(socketWriter);
             case "storeDiscardedItem" ->
-                discardMenuItemDbService.storeDiscardMenuItem(request, out);
+                discardMenuItemDbService.storeDiscardMenuItem(request, socketWriter);
             case "showDiscardMenuItems" ->
-                discardMenuItemDbService.showDiscardMenuItems(out);
+                discardMenuItemDbService.showDiscardMenuItems(socketWriter);
             default ->
-                ErrorHandler.handleInvalidAction(out);
+                ErrorHandler.handleInvalidAction(socketWriter);
         }
     }
 }

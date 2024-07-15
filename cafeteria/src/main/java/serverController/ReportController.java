@@ -12,15 +12,15 @@ public class ReportController implements ClientRequestHandler {
     private final ReportGenratorService reportGenerator = new ReportGenratorService();
 
     @Override
-    public void handleRequest(JSONObject jsonData, PrintWriter out) {
+    public void handleRequest(JSONObject jsonData, PrintWriter socketWriter) {
         String action = (String) jsonData.get("requestType");
 
         switch (action) {
             case "generateReport" -> {
-                reportGenerator.generateReport(out);
+                reportGenerator.generateReport(socketWriter);
             }
             default -> {
-                ErrorHandler.handleInvalidAction(out);
+                ErrorHandler.handleInvalidAction(socketWriter);
             }
         }
     }

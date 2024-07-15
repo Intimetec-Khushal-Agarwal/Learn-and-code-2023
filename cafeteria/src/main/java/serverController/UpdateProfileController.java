@@ -13,15 +13,15 @@ public class UpdateProfileController implements ClientRequestHandler {
     private final UpdateProfileService profileUpdater = new UpdateProfileService();
 
     @Override
-    public void handleRequest(JSONObject request, PrintWriter out) throws IOException {
+    public void handleRequest(JSONObject request, PrintWriter socketWriter) throws IOException {
         String action = (String) request.get("requestType");
 
         switch (action) {
             case "updateUserProfile" -> {
-                profileUpdater.updateUserProfile(request, out);
+                profileUpdater.updateUserProfile(request, socketWriter);
             }
             default -> {
-                ErrorHandler.handleInvalidAction(out);
+                ErrorHandler.handleInvalidAction(socketWriter);
 
             }
         }
