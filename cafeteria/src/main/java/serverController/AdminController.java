@@ -4,7 +4,7 @@ import java.io.PrintWriter;
 
 import org.json.simple.JSONObject;
 
-import server.ErrorHandler;
+import error.ErrorHandler;
 import service.AdminService;
 import service.ShowMenuService;
 
@@ -36,7 +36,7 @@ public class AdminController implements ClientRequestHandler {
                     ErrorHandler.handleInvalidAction(out);
             }
         } catch (Exception e) {
-            ErrorHandler.handleUnexpectedError(e, out);
+            ErrorHandler.handleException(e, out);
         }
     }
 }

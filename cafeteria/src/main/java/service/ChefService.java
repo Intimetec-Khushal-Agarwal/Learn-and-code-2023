@@ -12,7 +12,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import database.DatabaseConnection;
-import server.ErrorHandler;
+import error.ErrorHandler;
 
 public class ChefService {
 

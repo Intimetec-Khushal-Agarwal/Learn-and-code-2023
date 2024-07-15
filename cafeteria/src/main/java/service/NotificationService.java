@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 
 import database.DatabaseConnection;
-import server.ErrorHandler;
+import error.ErrorHandler;
 
 public class NotificationService {
 

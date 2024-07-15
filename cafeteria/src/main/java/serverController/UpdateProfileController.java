@@ -5,7 +5,7 @@ import java.io.PrintWriter;
 
 import org.json.simple.JSONObject;
 
-import server.ErrorHandler;
+import error.ErrorHandler;
 import service.UpdateProfileService;
 
 public class UpdateProfileController implements ClientRequestHandler {

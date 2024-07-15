@@ -6,7 +6,7 @@ import java.sql.SQLException;
 
 import org.json.simple.JSONObject;
 
-import server.ErrorHandler;
+import error.ErrorHandler;
 import service.RecommendationService;
 
 public class RecommendationController implements ClientRequestHandler {

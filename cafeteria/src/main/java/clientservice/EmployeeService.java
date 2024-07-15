@@ -198,6 +198,7 @@ public class EmployeeService {
         try {
             updateProfile.updateUserProfile();
         } catch (ParseException ex) {
+            System.err.println("Json Parse exception error");
         }
     }
 }

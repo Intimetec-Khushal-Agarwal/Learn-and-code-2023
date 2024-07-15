@@ -5,26 +5,22 @@ import java.io.PrintWriter;
 
 import org.json.simple.JSONObject;
 
-import server.ErrorHandler;
+import error.ErrorHandler;
 import service.ChefService;
 
 public class ChefController implements ClientRequestHandler {
 
-    private final ChefService chefService;
-
-    public ChefController() {
-        chefService = new ChefService();
-    }
+    private final ChefService chefService = new ChefService();
 
     @Override
     public void handleRequest(JSONObject jsonData, PrintWriter out) throws IOException {
         String action = (String) jsonData.get("requestType");
-
+        System.out.println("request type" + action);
         try {
             switch (action) {
                 case "showRolloutMenuByVote" ->
                     chefService.showRolloutMenuByVote(jsonData, out);
-                case "insertRolloutMenuItem" ->
+                case "insertRollOutMenuItem" ->
                     chefService.insertRolloutMenuItem(jsonData, out);
                 case "storeSelectedItemsInPreparedMenu" ->
                     chefService.storeSelectedItemsInPreparedMenu(jsonData, out);
@@ -33,7 +29,7 @@ public class ChefController implements ClientRequestHandler {
                 }
             }
         } catch (Exception e) {
-            ErrorHandler.handleException(out, e);
+            ErrorHandler.handleException(e, out);
         }
     }
 }

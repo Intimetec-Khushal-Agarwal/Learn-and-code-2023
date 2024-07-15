@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import database.DatabaseConnection;
-import server.ErrorHandler;
+import error.ErrorHandler;
 
 public class ReportGenratorService {
 

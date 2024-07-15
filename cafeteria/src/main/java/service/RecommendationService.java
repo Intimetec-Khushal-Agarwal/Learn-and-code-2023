@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 import database.DatabaseConnection;
-import server.ErrorHandler;
+import error.ErrorHandler;
 
 public class RecommendationService {
 
@@ -38,6 +38,9 @@ public class RecommendationService {
                 int menuItemId = resultSet.getInt("menu_item_id");
                 String sentimentsAndComments = resultSet.getString("sentiments_and_comments");
                 double avgCombinedRating = resultSet.getDouble("avg_combined_rating");
+
+                System.out.println("sentimentsAndComments " + sentimentsAndComments);
+                System.out.println("avgCombinedRating " + avgCombinedRating);
 
                 Map<Double, Set<String>> mappingMeal = SentimentAnalysis.analyzeSentiments(sentimentsAndComments);
                 Double sentimentScore = 50.00;

@@ -10,7 +10,7 @@ import java.util.Date;
 import org.json.simple.JSONObject;
 
 import database.DatabaseConnection;
-import server.ErrorHandler;
+import error.ErrorHandler;
 
 public class DiscardMenuItemService {
 

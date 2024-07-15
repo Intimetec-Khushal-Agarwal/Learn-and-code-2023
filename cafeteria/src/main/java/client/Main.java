@@ -13,7 +13,7 @@ public class Main {
             ClientCommandHandler commandHandler = new ClientCommandHandler(connectionManager);
             commandHandler.handleUserCommands();
         } catch (IOException | ParseException e) {
-            System.out.println("Error: " + e.getMessage());
+            error.ErrorHandler.handleIOException(e);
         } finally {
             connectionManager.closeConnection();
         }

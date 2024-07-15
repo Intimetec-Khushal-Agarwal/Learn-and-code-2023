@@ -1,4 +1,4 @@
-package server;
+package error;
 
 import java.io.PrintWriter;
 import java.sql.SQLException;
@@ -6,13 +6,6 @@ import java.sql.SQLException;
 import org.json.simple.JSONObject;
 
 public class ErrorHandler {
-
-    public static void handleUnexpectedError(Exception e, PrintWriter out) {
-        out.println("An unexpected error occurred: " + e.getMessage());
-        out.println("END_OF_RESPONSE");
-        out.flush();
-        System.err.println("Unexpected error: " + e.getMessage());
-    }
 
     public static void handleInvalidAction(PrintWriter out) {
         out.println("Invalid menu action");
@@ -31,7 +24,7 @@ public class ErrorHandler {
         System.err.println(message + ": " + e.getMessage());
     }
 
-    public static void handleException(PrintWriter out, Exception e) {
+    public static void handleException(Exception e, PrintWriter out) {
         out.println("Error processing request: " + e.getMessage());
         out.println("END_OF_RESPONSE");
         out.flush();
@@ -46,5 +39,9 @@ public class ErrorHandler {
         out.println(errorMessage + " : " + e.getMessage());
         out.println("END_OF_RESPONSE");
         out.flush();
+    }
+
+    public static void handleIOException(Exception e) {
+        System.out.println("Error " + " : " + e.getMessage());
     }
 }

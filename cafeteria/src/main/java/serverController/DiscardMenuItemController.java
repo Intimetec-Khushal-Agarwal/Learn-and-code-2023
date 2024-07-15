@@ -5,7 +5,7 @@ import java.io.PrintWriter;
 
 import org.json.simple.JSONObject;
 
-import server.ErrorHandler;
+import error.ErrorHandler;
 import service.DiscardMenuItemService;
 
 public class DiscardMenuItemController implements ClientRequestHandler {

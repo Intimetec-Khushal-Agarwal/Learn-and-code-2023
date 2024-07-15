@@ -9,6 +9,7 @@ import org.json.simple.parser.ParseException;
 import clientservice.ConsoleInputValidator;
 import clientservice.EmployeeService;
 import clientservice.RoleHandler;
+import error.ErrorHandler;
 import requestresponse.ServerRequestSender;
 import requestresponse.ServerResponseReader;
 
@@ -76,7 +77,7 @@ public class EmployeeController implements RoleHandler {
                 }
             }
         } catch (IOException | ParseException e) {
-            System.err.println("Error in employee client: " + e.getMessage());
+            ErrorHandler.handleIOException(e);
         }
     }
 

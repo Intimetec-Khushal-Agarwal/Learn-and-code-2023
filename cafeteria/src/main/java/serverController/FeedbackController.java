@@ -5,7 +5,7 @@ import java.io.PrintWriter;
 
 import org.json.simple.JSONObject;
 
-import server.ErrorHandler;
+import error.ErrorHandler;
 import service.FeedbackService;
 
 public class FeedbackController implements ClientRequestHandler {
@@ -26,7 +26,7 @@ public class FeedbackController implements ClientRequestHandler {
                     ErrorHandler.handleInvalidAction(out);
             }
         } catch (Exception e) {
-            ErrorHandler.handleException(out, e);
+            ErrorHandler.handleException(e, out);
         }
     }
 }

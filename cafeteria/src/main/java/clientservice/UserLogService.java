@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.json.simple.JSONObject;
 
 import client.ClientConnectionManager;
+import error.ErrorHandler;
 
 public class UserLogService {
 
@@ -30,7 +31,7 @@ public class UserLogService {
                 System.out.println(serverResponse);
             }
         } catch (IOException ex) {
-            System.out.println("Error reading server response: " + ex.getMessage());
+            ErrorHandler.handleIOException(ex);
         }
     }
 }

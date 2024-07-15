@@ -9,6 +9,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import error.ErrorHandler;
 import requestresponse.ServerRequestSender;
 import requestresponse.ServerResponseReader;
 
@@ -51,7 +52,7 @@ public class DiscardMenuItemService {
                 }
             }
         } catch (IOException | ParseException e) {
-            System.err.println("Error: " + e.getMessage());
+            ErrorHandler.handleIOException(e);
         }
         return false;
     }

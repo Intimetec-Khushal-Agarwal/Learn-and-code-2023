@@ -4,7 +4,7 @@ import java.io.PrintWriter;
 
 import org.json.simple.JSONObject;
 
-import server.ErrorHandler;
+import error.ErrorHandler;
 import service.ReportGenratorService;
 
 public class ReportController implements ClientRequestHandler {

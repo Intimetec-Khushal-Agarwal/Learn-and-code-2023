@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 import clientservice.ConsoleInputValidator;
+import error.ErrorHandler;
 import requestresponse.ServerRequestSender;
 import requestresponse.ServerResponseReader;
 
@@ -71,7 +72,7 @@ public class ClientConnectionManager {
                 consoleReader.close();
             }
         } catch (IOException e) {
-            System.out.println("Error closing resources: " + e.getMessage());
+            ErrorHandler.handleIOException(e);
         }
     }
 }
