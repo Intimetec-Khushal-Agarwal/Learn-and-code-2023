@@ -51,7 +51,6 @@ public class EmployeeService {
     }
 
     private void requestMenuFromServer() throws IOException {
-        System.out.println("Requesting menu from server...");
         String[] mealTypes = {"breakfast", "lunch", "dinner"};
         Map<String, List<String>> mealSelections = new HashMap<>();
         boolean result = false;
@@ -74,11 +73,8 @@ public class EmployeeService {
         String response = serverResponse.readResponseUntilEnd();
 
         if (response.contains("Currently, the menu item list is not prepared")) {
-            System.out.println(response + " " + mealType);
             return false;
         }
-        System.out.println("Menu for " + mealType);
-        System.out.println(response);
         List<String> itemIds = getSelectedItemIds(mealType);
         mealSelections.put(mealType, itemIds);
         return true;
@@ -86,7 +82,6 @@ public class EmployeeService {
 
     private List<String> getSelectedItemIds(String mealType) throws IOException {
         List<String> itemIds = new ArrayList<>();
-        System.out.println("Select items for " + mealType + ":");
         int itemId = inputValidations.getValidatedIntInput();
         itemIds.add(String.valueOf(itemId));
         return itemIds;
@@ -187,7 +182,6 @@ public class EmployeeService {
         if (parts.length > 1) {
             System.out.println("Provide the feedback for below questions\n\n");
             for (String question : parts) {
-                System.out.println(question);
                 inputValidations.getValidatedStringInput();
             }
             System.out.println("Thank you for submitting feedback");

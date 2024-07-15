@@ -7,6 +7,7 @@ import java.util.List;
 import clientservice.ChefService;
 import clientservice.ConsoleInputValidator;
 import clientservice.RoleHandler;
+import error.ErrorHandler;
 import requestresponse.ServerRequestSender;
 import requestresponse.ServerResponseReader;
 
@@ -41,8 +42,6 @@ public class ChefController implements RoleHandler {
     @Override
     public void handleRoleOperations() {
         try {
-            System.out.println("Connected to the server");
-
             while (true) {
                 displayMenu();
                 int command = inputValidations.getValidatedIntInput();
@@ -83,7 +82,7 @@ public class ChefController implements RoleHandler {
                 }
             }
         } catch (IOException e) {
-            System.out.println("Error in chef client: " + e.getMessage());
+            ErrorHandler.handleIOException(e);
         }
     }
 

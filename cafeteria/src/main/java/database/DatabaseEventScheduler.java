@@ -10,16 +10,12 @@ public class DatabaseEventScheduler {
         try (Connection conn = DatabaseConnection.getConnection(); Statement stmt = conn.createStatement()) {
             stmt.execute("SHOW VARIABLES LIKE 'event_scheduler'");
             if (!stmt.getResultSet().next()) {
-                System.out.println("Event Scheduler is not supported.");
                 return;
             }
             String eventSchedulerStatus = stmt.getResultSet().getString("Value");
             if (!eventSchedulerStatus.equalsIgnoreCase("ON")) {
                 String enableScheduler = "SET GLOBAL event_scheduler = ON;";
                 stmt.execute(enableScheduler);
-                System.out.println("Event Scheduler enabled.");
-            } else {
-                System.out.println("Event Scheduler is already enabled.");
             }
         } catch (SQLException e) {
             System.out.println("Failed to enable Event Scheduler: " + e.getMessage());

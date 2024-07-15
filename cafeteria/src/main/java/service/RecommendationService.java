@@ -39,9 +39,6 @@ public class RecommendationService {
                 String sentimentsAndComments = resultSet.getString("sentiments_and_comments");
                 double avgCombinedRating = resultSet.getDouble("avg_combined_rating");
 
-                System.out.println("sentimentsAndComments " + sentimentsAndComments);
-                System.out.println("avgCombinedRating " + avgCombinedRating);
-
                 Map<Double, Set<String>> mappingMeal = SentimentAnalysis.analyzeSentiments(sentimentsAndComments);
                 Double sentimentScore = 50.00;
                 Set<String> sentimentWords = new HashSet<>();

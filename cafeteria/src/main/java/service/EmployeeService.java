@@ -21,14 +21,10 @@ public class EmployeeService {
         String userId = (String) jsonData.get("userId");
         Date currentDate = new Date(System.currentTimeMillis());
 
-        System.out.println(mealType + "  " + userId + "  " + currentDate);
-
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement userPrefStmt = conn.prepareStatement(QueryConstants.GET_USER_PREFERENCES); PreparedStatement menuStmt = conn.prepareStatement(QueryConstants.GET_NEXT_DAY_MENU_ITEMS)) {
 
             userPrefStmt.setInt(1, Integer.parseInt(userId));
             ResultSet userPrefRs = userPrefStmt.executeQuery();
-
-            System.out.println("Inside showRollOutMenuItems");
             if (userPrefRs.next()) {
                 int foodTypeId = userPrefRs.getInt("food_type_id");
                 int foodPreferenceId = userPrefRs.getInt("food_preference_id");
@@ -43,7 +39,6 @@ public class EmployeeService {
                 menuStmt.setBoolean(6, sweetTooth);
 
                 try (ResultSet rs = menuStmt.executeQuery()) {
-                    System.out.println("Inside result set");
                     formatAndSendMenuItems(out, rs);
                 }
             } else {
@@ -58,7 +53,6 @@ public class EmployeeService {
     }
 
     private void formatAndSendMenuItems(PrintWriter out, ResultSet rs) throws SQLException {
-        System.out.println("Inside format method");
         if (rs.isBeforeFirst()) {
             out.printf("%-10s%-20s%-15s%-10s%-20s%-20s%-20s%-15s%-10s%n",
                     "ID", "Meal Item", "Price", "Rating", "Sentiments",
@@ -76,10 +70,6 @@ public class EmployeeService {
                 boolean sweetTooth = rs.getBoolean("sweetTooth");
 
                 out.printf("%-10d%-20s%-15.2f%-10d%-20s%-20s%-20s%-15s%-10b%n",
-                        itemId, name, price, rating, sentiments,
-                        foodTypeName, foodPreferenceName, spiceLevel, sweetTooth);
-
-                System.out.printf("%-10d%-20s%-15.2f%-10d%-20s%-20s%-20s%-15s%-10b%n",
                         itemId, name, price, rating, sentiments,
                         foodTypeName, foodPreferenceName, spiceLevel, sweetTooth);
             }

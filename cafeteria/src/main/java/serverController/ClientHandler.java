@@ -11,6 +11,8 @@ import java.util.Map;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
+import error.ErrorHandler;
+
 public class ClientHandler implements Runnable {
 
     private final Socket clientSocket;
@@ -56,7 +58,7 @@ public class ClientHandler implements Runnable {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
             handleClientRequests(in, out);
         } catch (IOException ex) {
-            System.out.println("Error handling client: " + ex.getMessage());
+            ErrorHandler.handleIOException(ex);
         } finally {
             closeSocket();
         }
@@ -109,10 +111,9 @@ public class ClientHandler implements Runnable {
         try {
             if (clientSocket != null && !clientSocket.isClosed()) {
                 clientSocket.close();
-                System.out.println("Client connection closed.");
             }
         } catch (IOException e) {
-            System.out.println("Error closing socket: " + e.getMessage());
+            ErrorHandler.handleIOException(e);
         }
     }
 }

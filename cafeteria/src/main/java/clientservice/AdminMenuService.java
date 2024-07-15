@@ -85,7 +85,6 @@ public class AdminMenuService {
     }
 
     private void displayMenu(JSONObject menuItem) throws IOException {
-        System.out.println("Inside display menu");
         jsonRequest.sendRequest(menuItem);
         jsonResponse.printResponse();
     }

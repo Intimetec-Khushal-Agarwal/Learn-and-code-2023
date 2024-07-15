@@ -21,14 +21,12 @@ public class UserLogService {
         requestData.put("requestType", "showUserLogs");
         connectionManager.getServerRequest().sendRequest(requestData);
 
-        System.out.println("Server Response:");
         try {
             String serverResponse;
             while ((serverResponse = connectionManager.getSocketReader().readLine()) != null) {
                 if (serverResponse.equals("END_OF_RESPONSE")) {
                     break;
                 }
-                System.out.println(serverResponse);
             }
         } catch (IOException ex) {
             ErrorHandler.handleIOException(ex);

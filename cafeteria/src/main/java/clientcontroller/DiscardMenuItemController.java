@@ -69,7 +69,6 @@ public class DiscardMenuItemController {
         menuItem.put("id", itemId);
         menuItem.put("messageId", messageId);
         serverRequest.sendRequest(menuItem);
-        System.out.println("For discard request send successfully waiting for response");
         serverResponse.printResponse();
     }
 }

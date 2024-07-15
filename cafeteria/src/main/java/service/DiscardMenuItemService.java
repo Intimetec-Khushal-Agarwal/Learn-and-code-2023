@@ -36,8 +36,6 @@ public class DiscardMenuItemService {
                     double sentimentScore = rs.getDouble("sentiment_score");
                     String mealTypeName = rs.getString("meal_type_name");
 
-                    System.out.println("Inside discardMenu Item table");
-
                     out.printf("%-15d%-35s%-10.2f%-15s%-20.2f%-20s\n", menuItemId, name, rating, sentiments, sentimentScore, mealTypeName);
                 }
                 out.println("END_OF_RESPONSE");
@@ -62,26 +60,19 @@ public class DiscardMenuItemService {
         int menuItemId = ((Long) request.get("id")).intValue();
         int messageId = ((Long) request.get("messageId")).intValue();
 
-        System.out.println("Inside storeDiscardMenuItem");
-
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement stmt = conn.prepareStatement(QueryConstants.STORE_DISCARD_MENU_ITEM)) {
-            System.out.println("Connection Established ");
             stmt.setInt(1, menuItemId);
             stmt.setInt(2, messageId);
             stmt.setInt(3, menuItemId);
 
             int rowsInserted = stmt.executeUpdate();
-            System.out.println("Row Inserted " + rowsInserted);
             if (rowsInserted > 0 && messageId == 3) {
                 menuService.deleteMenuItem(request, out);
-                System.out.println("Menu Item deleted");
             } else if (rowsInserted > 0 && messageId == 4) {
                 out.println("Item added for feedback response");
-                System.out.println("Item added for feedback response");
 
             } else {
                 out.println("Failed to add discard menu item");
-                System.out.println("Failed to add discard menu item");
 
             }
             out.println("END_OF_RESPONSE");
@@ -112,11 +103,9 @@ public class DiscardMenuItemService {
         try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement stmt = conn.prepareStatement(QueryConstants.GET_LATEST_DISCARDED_ITEM); ResultSet rs = stmt.executeQuery()) {
 
             JSONObject jsonResponse = new JSONObject();
-            System.out.println("Inside show discard menu Items");
             if (rs.isBeforeFirst()) {
                 out.printf("%-15s%-20s%-18s%-70s\n", "MenuItemID", "Name", "discard_date", "message");
                 out.println("-----------------------------------------------------------------------------------------------");
-                System.out.println("Inside before first");
 
                 while (rs.next()) {
                     int menuItemId = rs.getInt("menu_item_id");
@@ -130,15 +119,12 @@ public class DiscardMenuItemService {
                         text = "Answer the below question";
                     }
 
-                    System.out.println("Inside while");
-
                     out.printf("%-15s%-20s%-18s%-70s\n", menuItemId, name, date, text);
                     jsonResponse.put("status", "success");
                     jsonResponse.put("message", message);
                 }
             } else {
                 jsonResponse.put("status", "fail");
-                System.out.println("Inside else");
             }
 
             out.println("END_OF_RESPONSE");
