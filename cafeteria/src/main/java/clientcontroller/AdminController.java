@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import clientconstant.DisplayMenuConstants;
 import clientservice.AdminMenuService;
 import clientservice.ConsoleInputValidator;
 import clientservice.RoleHandler;
@@ -11,13 +12,6 @@ import requestresponse.ServerRequestSender;
 import requestresponse.ServerResponseReader;
 
 public class AdminController implements RoleHandler {
-
-    private static final int SHOW_MENU = 1;
-    private static final int ADD_MENU_ITEM = 2;
-    private static final int UPDATE_MENU_ITEM = 3;
-    private static final int DELETE_MENU_ITEM = 4;
-    private static final int DISCARD_MENU_ITEM = 5;
-    private static final int EXIT = 6;
 
     private final List<String> operations;
     private final String employeeId;
@@ -44,30 +38,30 @@ public class AdminController implements RoleHandler {
                 System.out.println("Enter operation to perform:\n1. Show Menu\n2. Add Menu Item\n3. Update Menu Item\n4. Delete Menu Item\n5. Discard Menu Item\n6. Exit ");
                 int command = inputValidations.getValidatedIntInput();
 
-                if (command == EXIT) {
+                if (command == DisplayMenuConstants.EXIT) {
                     jsonRequest.logUserOperations(employeeId, operations);
                     jsonResponse.printResponse();
                     break;
                 }
 
                 switch (command) {
-                    case SHOW_MENU -> {
+                    case DisplayMenuConstants.SHOW_MENU -> {
                         operations.add("showMenu");
                         menuItemOperations.showMenu();
                     }
-                    case ADD_MENU_ITEM -> {
+                    case DisplayMenuConstants.ADD_MENU_ITEM -> {
                         operations.add("addMenu");
                         menuItemOperations.addMenuItem();
                     }
-                    case UPDATE_MENU_ITEM -> {
+                    case DisplayMenuConstants.UPDATE_MENU_ITEM -> {
                         operations.add("updateMenu");
                         menuItemOperations.updateMenuItem();
                     }
-                    case DELETE_MENU_ITEM -> {
+                    case DisplayMenuConstants.DELETE_MENU_ITEM -> {
                         operations.add("deleteMenu");
                         menuItemOperations.deleteMenuItem();
                     }
-                    case DISCARD_MENU_ITEM -> {
+                    case DisplayMenuConstants.DISCARD_MENU_ITEM -> {
                         operations.add("discardMenuItem");
                         discardMenuItemController.discardMenuItems();
                     }

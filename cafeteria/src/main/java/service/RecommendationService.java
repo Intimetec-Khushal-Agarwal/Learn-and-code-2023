@@ -15,6 +15,7 @@ import java.util.Set;
 
 import database.DatabaseConnection;
 import error.ErrorHandler;
+import serverconstant.QueryConstants;
 
 public class RecommendationService {
 

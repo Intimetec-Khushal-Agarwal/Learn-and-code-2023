@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.json.simple.parser.ParseException;
 
+import clientconstant.DisplayMenuConstants;
 import clientservice.ConsoleInputValidator;
 import clientservice.EmployeeService;
 import clientservice.RoleHandler;
@@ -14,13 +15,6 @@ import requestresponse.ServerRequestSender;
 import requestresponse.ServerResponseReader;
 
 public class EmployeeController implements RoleHandler {
-
-    private static final int SELECT_MENU_ITEM = 1;
-    private static final int GIVE_FEEDBACK = 2;
-    private static final int VIEW_NOTIFICATION = 3;
-    private static final int VIEW_DISCARD_MENU_ITEM = 4;
-    private static final int UPDATE_PROFILE = 5;
-    private static final int EXIT = 6;
 
     private final String employeeId;
     private final List<String> operations;
@@ -45,30 +39,30 @@ public class EmployeeController implements RoleHandler {
                 displayMenu();
                 int command = inputValidations.getValidatedIntInput();
 
-                if (command == EXIT) {
+                if (command == DisplayMenuConstants.EXIT) {
                     serverRequest.logUserOperations(employeeId, operations);
                     serverResponse.printResponse();
                     break;
                 }
 
                 switch (command) {
-                    case SELECT_MENU_ITEM -> {
+                    case DisplayMenuConstants.SELECT_MENU_ITEM -> {
                         operations.add("Select Menu Item");
                         employeeOperations.handleSelectMenuItem();
                     }
-                    case GIVE_FEEDBACK -> {
+                    case DisplayMenuConstants.GIVE_FEEDBACK -> {
                         operations.add("Give Feedback");
                         employeeOperations.handleGiveFeedback();
                     }
-                    case VIEW_NOTIFICATION -> {
+                    case DisplayMenuConstants.VIEW_NOTIFICATION -> {
                         operations.add("View Notification");
                         employeeOperations.viewNotification();
                     }
-                    case VIEW_DISCARD_MENU_ITEM -> {
+                    case DisplayMenuConstants.VIEW_DISCARD_MENU_ITEM -> {
                         operations.add("View Discard Menu");
                         employeeOperations.showDiscardMenuItems();
                     }
-                    case UPDATE_PROFILE -> {
+                    case DisplayMenuConstants.UPDATE_PROFILE -> {
                         operations.add("Update Profile");
                         employeeOperations.updateUserProfile();
                     }

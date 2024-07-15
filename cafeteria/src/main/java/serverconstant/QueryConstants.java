@@ -1,4 +1,4 @@
-package service;
+package serverconstant;
 
 public class QueryConstants {
 
